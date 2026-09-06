@@ -13,28 +13,45 @@ public class AuctionHousePlugin extends JavaPlugin {
     @Override
     public void onEnable() {
         services = new AhServices(this);
-        AhCommand command = new AhCommand(services);
+        AhCommand command = new AhCommand(this);
         getCommand("ah").setExecutor(command);
         getCommand("ah").setTabCompleter(command);
         getServer().getPluginManager().registerEvents(new MenuListener(services.gui()), this);
-        getServer().getPluginManager().registerEvents(new JoinNotifier(services), this);
-
-        long interval = services.sweepIntervalMs();
-        sweepTask = getServer().getScheduler().runTaskTimer(this, () -> {
-            int expired = services.sweep().sweep(System.currentTimeMillis());
-            if (expired > 0) getLogger().info(expired + " listings expired");
-        }, interval, interval);
-
+        getServer().getPluginManager().registerEvents(new JoinNotifier(this), this);
+        startSweep();
         getLogger().info("AuctionHouse enabled. Economy=" + (services.isEconomyEnabled() ? "ON" : "OFF (item trading)"));
     }
 
     @Override
     public void onDisable() {
-        if (sweepTask != null) sweepTask.cancel();
+        stopSweep();
         if (services != null) services.close();
+    }
+
+    private void startSweep() {
+        long interval = services.sweepIntervalMs();
+        sweepTask = getServer().getScheduler().runTaskTimer(this, () -> {
+            int expired = services.sweep().sweep(System.currentTimeMillis());
+            if (expired > 0) getLogger().info(expired + " listings expired");
+        }, interval, interval);
+    }
+
+    private void stopSweep() {
+        if (sweepTask != null) {
+            sweepTask.cancel();
+            sweepTask = null;
+        }
     }
 
     public AhServices services() {
         return services;
+    }
+
+    public void reloadServices() {
+        stopSweep();
+        if (services != null) services.close();
+        services = new AhServices(this);
+        startSweep();
+        getLogger().info("AuctionHouse reloaded");
     }
 }

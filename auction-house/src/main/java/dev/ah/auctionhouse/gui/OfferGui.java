@@ -47,6 +47,7 @@ public class OfferGui {
         if (r == AhActions.OfferResult.SUCCESS) {
             player.sendMessage(MM.deserialize(services.messages().get("offers.made")));
             services.sounds().play(player, SoundRegistry.Event.CLICK);
+            gui.markConfirmed();
             player.closeInventory();
         } else {
             String key = switch (r) {

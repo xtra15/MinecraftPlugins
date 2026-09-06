@@ -15,7 +15,10 @@ public class GuiManager {
 
     public void onClose(InventoryCloseEvent event) {
         if (event.getPlayer() instanceof Player p) {
-            OPEN_DEPOSITS.remove(p);
+            DepositGui deposit = OPEN_DEPOSITS.remove(p);
+            if (deposit != null && !deposit.isConfirmed()) {
+                deposit.returnItems(p);
+            }
         }
         ChestGui.close(event.getInventory());
     }

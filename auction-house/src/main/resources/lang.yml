@@ -1,6 +1,7 @@
 prefix: "<gold>[AH]</gold> "
 commands:
   help: "Available: <gold>sell</gold>, <gold>search <item></gold>, <gold>my</gold>, <gold>claim</gold>, <gold>admin</gold>, <gold>reload</gold>"
+  reloaded: "<green>AuctionHouse reloaded."
 checks:
   cannot-offer-self: "<red>You cannot offer on your own listing."
   max-listings: "<red>You have reached the listing limit."

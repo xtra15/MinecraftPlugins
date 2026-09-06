@@ -37,6 +37,7 @@ public class SellGui {
         if (r == AhActions.CreateResult.SUCCESS) {
             player.sendMessage(MM.deserialize(services.messages().get("listings.created")));
             services.sounds().play(player, SoundRegistry.Event.SALE);
+            gui.markConfirmed();
             player.closeInventory();
         } else {
             player.sendMessage(MM.deserialize(services.messages().get(

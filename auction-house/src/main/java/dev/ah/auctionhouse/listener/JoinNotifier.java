@@ -1,5 +1,6 @@
 package dev.ah.auctionhouse.listener;
 
+import dev.ah.auctionhouse.AuctionHousePlugin;
 import dev.ah.auctionhouse.AhServices;
 import dev.ah.auctionhouse.notify.NotificationService;
 import dev.ah.core.msg.SoundRegistry;
@@ -10,28 +11,30 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import java.util.Map;
 
 public class JoinNotifier implements Listener {
-    private final AhServices services;
-    private final NotificationService notifications;
+    private final AuctionHousePlugin plugin;
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
-    public JoinNotifier(AhServices services) {
-        this.services = services;
-        this.notifications = new NotificationService(services);
+    public JoinNotifier(AuctionHousePlugin plugin) {
+        this.plugin = plugin;
+    }
+
+    private AhServices services() {
+        return plugin.services();
     }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         var p = event.getPlayer();
-        notifications.flush(p);
+        new NotificationService(services()).flush(p);
 
-        long unclaimed = services.claims().countUnclaimed(p.getUniqueId());
-        long pending = services.offers().countPendingForSeller(p.getUniqueId());
+        long unclaimed = services().claims().countUnclaimed(p.getUniqueId());
+        long pending = services().offers().countPendingForSeller(p.getUniqueId());
         if (unclaimed > 0) {
-            p.sendMessage(MM.deserialize(services.messages().get("claims.unclaimed", Map.of("count", String.valueOf(unclaimed)))));
+            p.sendMessage(MM.deserialize(services().messages().get("claims.unclaimed", Map.of("count", String.valueOf(unclaimed)))));
         }
         if (pending > 0) {
-            p.sendMessage(MM.deserialize(services.messages().get("offers.received")));
-            services.sounds().play(p, SoundRegistry.Event.OFFER_RECEIVED);
+            p.sendMessage(MM.deserialize(services().messages().get("offers.received")));
+            services().sounds().play(p, SoundRegistry.Event.OFFER_RECEIVED);
         }
     }
 }

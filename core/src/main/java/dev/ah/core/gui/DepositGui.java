@@ -10,12 +10,14 @@ public class DepositGui extends ChestGui {
     private final int minSlot;
     private final int maxSlot;
     private boolean confirmed;
+    private boolean returned;
 
     public DepositGui(int rows, String title, int minSlot, int maxSlot) {
         super(rows, title);
         this.minSlot = minSlot;
         this.maxSlot = maxSlot;
         this.confirmed = false;
+        this.returned = false;
     }
 
     public List<ItemStack> collect() {
@@ -28,14 +30,19 @@ public class DepositGui extends ChestGui {
         return out;
     }
 
-    public boolean cancelAndReturn(Player player) {
-        if (inventory() == null) return false;
+    public void returnItems(Player player) {
+        if (returned || inventory() == null) return;
         for (int i = minSlot; i <= maxSlot; i++) {
             ItemStack item = inventory().getItem(i);
             if (item != null && item.getType() != Material.AIR) {
                 player.getInventory().addItem(item);
             }
         }
+        returned = true;
+    }
+
+    public boolean cancelAndReturn(Player player) {
+        returnItems(player);
         player.closeInventory();
         return true;
     }
