@@ -1,0 +1,14 @@
+economy:
+  enabled: false
+limits:
+  max-listings-per-player: 5
+  max-items-per-offer: 54
+  max-offers-per-player: 10
+durations-ms:
+  - 86400000        # 1 day
+  - 604800000       # 7 days
+  - 2592000000      # 30 days
+default-duration-ms: 86400000
+sweep-interval-seconds: 60
+page-size: 36
+fill-item: "BLACK_STAINED_GLASS_PANE"

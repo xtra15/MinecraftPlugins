@@ -1,0 +1,8 @@
+open:     { enabled: true,  sound: "UI_BUTTON_CLICK", pitch: 1.0, volume: 0.6 }
+click:    { enabled: true,  sound: "UI_BUTTON_CLICK", pitch: 1.0, volume: 0.6 }
+offer_received:   { enabled: true,  sound: "ENTITY_EXPERIENCE_ORB_PICKUP", pitch: 1.2, volume: 0.8 }
+offer_accepted:   { enabled: true,  sound: "ENTITY_PLAYER_LEVELUP", pitch: 1.0, volume: 0.8 }
+offer_rejected:   { enabled: true,  sound: "BLOCK_NOTE_BLOCK_BASS", pitch: 0.7, volume: 0.8 }
+sale:     { enabled: true,  sound: "ENTITY_PLAYER_LEVELUP", pitch: 1.4, volume: 0.8 }
+expiry:   { enabled: true,  sound: "ENTITY_ITEM_PICKUP", pitch: 0.8, volume: 0.8 }
+error:    { enabled: true,  sound: "ENTITY_VILLAGER_NO", pitch: 1.0, volume: 0.8 }

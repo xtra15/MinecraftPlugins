@@ -1,0 +1,54 @@
+prefix: "<gold>[AH]</gold> "
+commands:
+  help: "Available: <gold>sell</gold>, <gold>search <item></gold>, <gold>my</gold>, <gold>claim</gold>, <gold>admin</gold>, <gold>reload</gold>"
+checks:
+  cannot-offer-self: "<red>You cannot offer on your own listing."
+  max-listings: "<red>You have reached the listing limit."
+  max-offer-items: "<red>Too many items in this offer."
+  invalid-items: "<red>You must deposit at least one item."
+  listing-expired: "<red>This listing has expired."
+listings:
+  created: "<green>Listing created."
+  cancelled: "<green>Listing cancelled; items sent to your claims."
+  expired: "<yellow>One of your listings expired and its items are in your claims."
+  lore:
+    price: "<gray>BIN: <white><price>"
+    offers: "<gray>Offers: <white><count>"
+    remaining: "<gray>Expires in: <white><minutes>m"
+offers:
+  made: "<green>Offer sent."
+  received: "<yellow>You have a new offer on one of your listings."
+  accepted-by-seller: "<green>Your offer was accepted. Claim your item(s)!"
+  rejected-by-seller: "<red>Your offer was rejected."
+  accepted-seller: "<green>You accepted the offer."
+  rejected-seller: "<green>You rejected the offer."
+claims:
+  title: "<gold>Claim <gray>· page <page>/<pages>"
+  row: "<gold>Claim <gray>· <date>"
+  more: "<gray>+<extra> more item(s)"
+  unclaimed: "<yellow>You have <count> unclaimed item(s). Use /ah claim."
+  empty: "<gray>No unclaimed items."
+  withdrawn: "<green>Items withdrawn."
+  no-space: "<red>Your inventory is full. Some items stayed in claims."
+admin:
+  no-permission: "<red>You do not have permission."
+  title: "<gold>Admin <gray>· users"
+  user:
+    title: "<gold>Listings"
+    listing: "<gray>#<id> · <status> · <offers> offer(s)"
+  sales:
+    title: "<gold>Sales log"
+    row: "<gray><seller> → <buyer> · <outcome>"
+gui:
+  main:
+    title: "<gold>Auctions"
+offer-board:
+  title: "<gold>Offers"
+  items-viewer: "<gold>Offered items"
+sell:
+  title: "<gold>List an item"
+offer:
+  title: "<gold>Make an offer"
+errors:
+  economy: "<red>Economy is disabled."
+  unknown: "<red>Something went wrong."

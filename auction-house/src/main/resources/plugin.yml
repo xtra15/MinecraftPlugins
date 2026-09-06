@@ -1,0 +1,15 @@
+name: AuctionHouse
+version: 1.0.0
+main: dev.ah.auctionhouse.AuctionHousePlugin
+api-version: "1.21"
+commands:
+  ah:
+    description: Auction House
+    aliases: [auctionhouse]
+permissions:
+  ah.use:
+    description: Use the auction house
+    default: true
+  ah.admin:
+    description: Admin auction house features
+    default: op
