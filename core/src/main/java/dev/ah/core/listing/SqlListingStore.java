@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,8 +21,8 @@ public class SqlListingStore implements ListingStore {
     public long create(Listing listing) {
         return db.transact(c -> {
             try (PreparedStatement ps = c.prepareStatement("""
-                    INSERT INTO listings (owner_uuid, item_data, price, duration_ms, created_at, expires_at, status)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)""", new String[]{"id"})) {
+                    INSERT INTO listings (owner_uuid, item_data, price, duration_ms, created_at, expires_at, status, search_text)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""", new String[]{"id"})) {
                 ps.setString(1, listing.owner().toString());
                 ps.setString(2, listing.itemData());
                 if (listing.price() == null) ps.setNull(3, java.sql.Types.DOUBLE); else ps.setDouble(3, listing.price());
@@ -29,6 +30,7 @@ public class SqlListingStore implements ListingStore {
                 ps.setLong(5, listing.createdAt());
                 ps.setLong(6, listing.expiresAt());
                 ps.setString(7, listing.status());
+                ps.setString(8, listing.searchText());
                 ps.executeUpdate();
                 try (ResultSet keys = ps.getGeneratedKeys()) {
                     keys.next();
@@ -55,13 +57,26 @@ public class SqlListingStore implements ListingStore {
     }
 
     @Override
-    public List<Listing> activePage(int limit, int offset) {
-        return query("SELECT * FROM listings WHERE status = 'ACTIVE' ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?", limit, offset);
-    }
-
-    @Override
-    public List<Listing> activePageOldest(int limit, int offset) {
-        return query("SELECT * FROM listings WHERE status = 'ACTIVE' ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?", limit, offset);
+    public List<Listing> activePage(int limit, int offset, String search, boolean oldestFirst) {
+        String order = oldestFirst ? "created_at ASC, id ASC" : "created_at DESC, id DESC";
+        StringBuilder sql = new StringBuilder("SELECT * FROM listings WHERE status = 'ACTIVE'");
+        if (search != null && !search.isBlank()) sql.append(" AND search_text LIKE ?");
+        sql.append(" ORDER BY ").append(order).append(" LIMIT ? OFFSET ?");
+        return db.transact(c -> {
+            try (PreparedStatement ps = c.prepareStatement(sql.toString())) {
+                int i = 1;
+                if (search != null && !search.isBlank()) ps.setString(i++, "%" + search.toLowerCase(Locale.ROOT) + "%");
+                ps.setInt(i++, limit);
+                ps.setInt(i, offset);
+                try (ResultSet rs = ps.executeQuery()) {
+                    List<Listing> out = new ArrayList<>();
+                    while (rs.next()) out.add(map(rs));
+                    return out;
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 
     @Override
@@ -116,11 +131,22 @@ public class SqlListingStore implements ListingStore {
 
     @Override
     public long countActive() {
+        return countActive(null);
+    }
+
+    @Override
+    public long countActive(String search) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM listings WHERE status = 'ACTIVE'");
+        if (search != null && !search.isBlank()) sql.append(" AND search_text LIKE ?");
         return db.transact(c -> {
-            try (var ps = c.prepareStatement("SELECT COUNT(*) FROM listings WHERE status = 'ACTIVE'");
-                 var rs = ps.executeQuery()) {
-                rs.next();
-                return rs.getLong(1);
+            try (PreparedStatement ps = c.prepareStatement(sql.toString())) {
+                if (search != null && !search.isBlank()) {
+                    ps.setString(1, "%" + search.toLowerCase(Locale.ROOT) + "%");
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    return rs.getLong(1);
+                }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -142,14 +168,18 @@ public class SqlListingStore implements ListingStore {
         });
     }
 
-    private List<Listing> query(String sql, int limit, int offset) {
+    @Override
+    public List<UUID> activeOwners(int limit) {
         return db.transact(c -> {
-            try (PreparedStatement ps = c.prepareStatement(sql)) {
+            try (PreparedStatement ps = c.prepareStatement("""
+                    SELECT owner_uuid FROM (
+                      SELECT owner_uuid, MAX(created_at) AS latest FROM listings
+                      WHERE status = 'ACTIVE' GROUP BY owner_uuid
+                    ) ORDER BY latest DESC LIMIT ?""")) {
                 ps.setInt(1, limit);
-                ps.setInt(2, offset);
                 try (ResultSet rs = ps.executeQuery()) {
-                    List<Listing> out = new ArrayList<>();
-                    while (rs.next()) out.add(map(rs));
+                    List<UUID> out = new ArrayList<>();
+                    while (rs.next()) out.add(UUID.fromString(rs.getString(1)));
                     return out;
                 }
             } catch (SQLException e) {
@@ -167,6 +197,7 @@ public class SqlListingStore implements ListingStore {
                 rs.getLong("duration_ms"),
                 rs.getLong("created_at"),
                 rs.getLong("expires_at"),
-                rs.getString("status"));
+                rs.getString("status"),
+                rs.getString("search_text"));
     }
 }

@@ -30,7 +30,7 @@ public class AuctionHousePlugin extends JavaPlugin {
 
     private void startSweep() {
         long interval = services.sweepIntervalMs();
-        sweepTask = getServer().getScheduler().runTaskTimer(this, () -> {
+        sweepTask = getServer().getScheduler().runTaskTimerAsynchronously(this, () -> {
             int expired = services.sweep().sweep(System.currentTimeMillis());
             if (expired > 0) getLogger().info(expired + " listings expired");
         }, interval, interval);

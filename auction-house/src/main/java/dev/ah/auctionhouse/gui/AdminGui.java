@@ -12,10 +12,8 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 public class AdminGui {
@@ -31,8 +29,7 @@ public class AdminGui {
         gui.fill(new ItemStack(Material.valueOf(services.getGuiFiller()), 1));
         gui.fillRect(9, 44, null);
 
-        Set<UUID> players = new HashSet<>();
-        for (Listing l : services.listings().activePage(10_000, 0)) players.add(l.owner());
+        List<UUID> players = services.listings().activeOwners(1000);
         int slot = 9;
         for (UUID uuid : players) {
             if (slot > 44) break;

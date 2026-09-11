@@ -4,7 +4,6 @@ import dev.ah.auctionhouse.AhServices;
 import dev.ah.core.gui.ChestGui;
 import dev.ah.core.listing.Listing;
 import dev.ah.core.misc.ItemBundleCodec;
-import dev.ah.core.misc.Pager;
 import dev.ah.core.msg.SoundRegistry;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
@@ -41,32 +40,20 @@ public class AhMainGui {
     }
 
     private void open(Player player, int page) {
-        List<Listing> active = sort.equals("oldest")
-                ? services.listings().activePageOldest(10_000, 0)
-                : services.listings().activePage(10_000, 0);
-        List<Listing> filtered = active.stream()
-                .filter(l -> {
-                    if (search == null || search.isBlank()) return true;
-                    List<ItemStack> items = ItemBundleCodec.decode(l.itemData());
-                    StringBuilder name = new StringBuilder();
-                    for (ItemStack item : items) {
-                        if (item != null && item.getItemMeta() != null && item.getItemMeta().getDisplayName() != null) {
-                            name.append(item.getItemMeta().getDisplayName().toLowerCase(Locale.ROOT));
-                        }
-                    }
-                    return name.toString().contains(search);
-                })
-                .toList();
-
-        Pager<Listing> pager = new Pager<>(filtered, services.pageSize());
-        int pageIndex = Math.max(0, Math.min(page, pager.pages() - 1));
+        String needle = (search == null || search.isBlank()) ? null : search;
+        boolean oldest = "oldest".equals(sort);
+        int pageSize = services.pageSize();
+        long total = services.listings().countActive(needle);
+        int pages = Math.max(1, (int) Math.ceilDiv(total, pageSize));
+        int pageIndex = Math.max(0, Math.min(page, pages - 1));
+        List<Listing> pageRows = services.listings().activePage(pageSize, pageIndex * pageSize, needle, oldest);
 
         ChestGui gui = new ChestGui(6, services.messages().get("gui.main.title"));
         gui.fill(new ItemStack(Material.valueOf(services.getGuiFiller()), 1));
         gui.fillRect(9, 44, null);
 
         int slot = 9;
-        for (Listing listing : pager.page(pageIndex)) {
+        for (Listing listing : pageRows) {
             if (slot > 44) break;
             List<ItemStack> items = ItemBundleCodec.decode(listing.itemData());
             if (items.isEmpty()) { slot++; continue; }

@@ -29,8 +29,24 @@ public class AhActions {
         long expires = now + services.allowedDurationsMs().stream()
                 .filter(d -> d <= durationMs).max(Long::compareTo).orElse(services.defaultDurationMs());
         services.listings().create(new Listing(0, seller.getUniqueId(), ItemBundleCodec.encode(clean), null,
-                expires - now, now, expires, "ACTIVE"));
+                expires - now, now, expires, "ACTIVE", buildSearchText(clean)));
         return CreateResult.SUCCESS;
+    }
+
+    private static String buildSearchText(List<ItemStack> items) {
+        StringBuilder sb = new StringBuilder(512);
+        for (ItemStack item : items) {
+            if (item == null || item.getType().isAir()) continue;
+            String display = (item.hasItemMeta() && item.getItemMeta().getDisplayName() != null)
+                    ? item.getItemMeta().getDisplayName() : "";
+            if (!display.isBlank()) {
+                sb.append(display.trim()).append(' ');
+            } else {
+                sb.append(item.getType().name().toLowerCase(java.util.Locale.ROOT).replace('_', ' ')).append(' ');
+            }
+        }
+        String text = sb.toString().toLowerCase(java.util.Locale.ROOT).trim();
+        return text.length() > 400 ? text.substring(0, 400) : text;
     }
 
     public OfferResult makeOffer(Player buyer, long listingId, List<ItemStack> items) {

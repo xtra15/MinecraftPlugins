@@ -17,7 +17,7 @@ class ExpirySweepTest {
         db.init();
         var listings = new SqlListingStore(db);
         var claims = new SqlClaimStore(db);
-        ExpirySweep sweep = new ExpirySweep(listings, claims);
+        ExpirySweep sweep = new ExpirySweep(db, listings, claims);
         UUID owner = UUID.randomUUID();
         long l1 = listings.create(new Listing(0, owner, "EXPIRED_ITEM", null, 0, 1, 100, "ACTIVE"));
         listings.create(new Listing(0, owner, "FUTURE_ITEM", null, 0, 1, 9999, "ACTIVE"));
@@ -38,7 +38,7 @@ class ExpirySweepTest {
         var listings = new SqlListingStore(db);
         var claims = new SqlClaimStore(db);
         listings.create(new Listing(0, UUID.randomUUID(), "FUTURE", null, 0, 1, 9999, "ACTIVE"));
-        assertEquals(0, new ExpirySweep(listings, claims).sweep(1L));
+        assertEquals(0, new ExpirySweep(db, listings, claims).sweep(1L));
         db.close();
     }
 }

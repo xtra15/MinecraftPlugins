@@ -61,7 +61,7 @@ public class AhServices {
         this.sales = new SqlSalesLogStore(db);
         this.notifications = new SqlNotificationStore(db);
         this.decisions = new OfferDecisionService(listings, offers, claims, sales);
-        this.sweep = new ExpirySweep(listings, claims);
+        this.sweep = new ExpirySweep(db, listings, claims);
         this.messages = new MessageRepository(new File(plugin.getDataFolder(), "lang.yml"));
         this.sounds = new SoundRegistry(new File(plugin.getDataFolder(), "sounds.yml"));
         this.gui = new GuiManager();

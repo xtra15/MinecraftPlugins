@@ -3,6 +3,7 @@ package dev.ah.core.db;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.UUID;
@@ -40,7 +41,44 @@ public final class SqliteDatabase implements AutoCloseable {
     }
 
     public void init() {
+        runPragmas();
         transactAll(DDL);
+        ensureColumn("listings", "search_text");
+    }
+
+    private void runPragmas() {
+        try (Statement st = connection.createStatement()) {
+            st.execute("PRAGMA journal_mode=WAL");
+            st.execute("PRAGMA synchronous=NORMAL");
+            st.execute("PRAGMA busy_timeout=5000");
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void ensureColumn(String table, String column) {
+        transact(c -> {
+            boolean exists = false;
+            try (Statement st = c.createStatement();
+                 ResultSet rs = st.executeQuery("PRAGMA table_info(" + table + ")")) {
+                while (rs.next()) {
+                    if (column.equals(rs.getString(2))) {
+                        exists = true;
+                        break;
+                    }
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            if (!exists) {
+                try (Statement st = c.createStatement()) {
+                    st.executeUpdate("ALTER TABLE " + table + " ADD COLUMN " + column + " TEXT");
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return null;
+        });
     }
 
     public <T> T transact(Transaction<T> body) {
@@ -78,7 +116,7 @@ public final class SqliteDatabase implements AutoCloseable {
         transact(c -> {
             try (Statement st = c.createStatement()) {
                 for (String statement : sql.split(";")) {
-                    if (!statement.isBlank()) st.executeUpdate(statement);
+                    if (!statement.isBlank()) st.execute(statement);
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -101,7 +139,8 @@ public final class SqliteDatabase implements AutoCloseable {
               duration_ms INTEGER NOT NULL,
               created_at INTEGER NOT NULL,
               expires_at INTEGER NOT NULL,
-              status TEXT NOT NULL
+              status TEXT NOT NULL,
+              search_text TEXT
             );
             CREATE INDEX IF NOT EXISTS idx_listings_status ON listings(status);
             CREATE INDEX IF NOT EXISTS idx_listings_owner ON listings(owner_uuid);

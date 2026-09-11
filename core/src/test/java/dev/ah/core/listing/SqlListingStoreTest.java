@@ -35,8 +35,8 @@ class SqlListingStoreTest {
         for (int i = 1; i <= 5; i++) {
             s.create(new Listing(0, UUID.randomUUID(), "D" + i, null, 0, i, i + 1000, "ACTIVE"));
         }
-        List<Listing> page1 = s.activePage(3, 0);
-        List<Listing> page2 = s.activePage(3, 3);
+        List<Listing> page1 = s.activePage(3, 0, null, false);
+        List<Listing> page2 = s.activePage(3, 3, null, false);
         assertEquals("D5", page1.get(0).itemData());
         assertEquals(3, page1.size());
         assertEquals(2, page2.size());
@@ -51,7 +51,38 @@ class SqlListingStoreTest {
         for (int i = 1; i <= 3; i++) {
             s.create(new Listing(0, UUID.randomUUID(), "O" + i, null, 0, i, i + 1000, "ACTIVE"));
         }
-        assertEquals("O1", s.activePageOldest(5, 0).get(0).itemData());
+        assertEquals("O1", s.activePage(5, 0, null, true).get(0).itemData());
+        db.close();
+    }
+
+    @Test
+    void activePageMatchesSearchTextInsensitively() {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        SqlListingStore s = store(db);
+        s.create(new Listing(0, UUID.randomUUID(), "A", null, 0, 3, 1000, "ACTIVE", "diamond sword"));
+        s.create(new Listing(0, UUID.randomUUID(), "B", null, 0, 2, 1000, "ACTIVE", "iron pickaxe"));
+        s.create(new Listing(0, UUID.randomUUID(), "C", null, 0, 1, 1000, "CANCELLED", "diamond sword"));
+
+        List<Listing> matches = s.activePage(10, 0, "Diamond", false);
+        assertEquals(1, matches.size());
+        assertEquals("A", matches.get(0).itemData());
+        assertEquals(1, s.countActive("diamond"));
+        assertEquals(2, s.countActive(null));
+        db.close();
+    }
+
+    @Test
+    void activeOwnersReturnsDistinctOwnersOfActiveListings() {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        SqlListingStore s = store(db);
+        UUID alice = UUID.randomUUID();
+        UUID bob = UUID.randomUUID();
+        s.create(new Listing(0, alice, "1", null, 0, 1, 100, "ACTIVE"));
+        s.create(new Listing(0, alice, "2", null, 0, 2, 100, "ACTIVE"));
+        s.create(new Listing(0, bob, "3", null, 0, 3, 100, "SOLD"));
+        List<UUID> owners = s.activeOwners(10);
+        assertEquals(1, owners.size());
+        assertEquals(alice, owners.get(0));
         db.close();
     }
 
