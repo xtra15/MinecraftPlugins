@@ -62,7 +62,11 @@ public class ChestGui {
         requireSlot(fromSlot);
         requireSlot(toSlot);
         for (int i = fromSlot; i <= toSlot; i++) {
-            slots.putIfAbsent(i, new Slot(filler, clk -> {}));
+            if (filler == null) {
+                slots.remove(i);
+            } else {
+                slots.putIfAbsent(i, new Slot(filler, clk -> {}));
+            }
         }
     }
 
