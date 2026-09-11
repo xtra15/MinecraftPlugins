@@ -20,7 +20,7 @@ public class SellGui {
 
     public void open(Player player) {
         DepositGui gui = new DepositGui(5, services.messages().get("sell.title"), 9, 17);
-        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
+        gui.fillRect(0, 8, new ItemStack(services.guiFillerMaterial(), 1));
         gui.fillRect(9, 17, null);
         gui.set(0, GuiItems.button(services, Material.NAME_TAG, "sell.preview"));
         gui.on(39, () -> onConfirm(player, gui)).set(39, GuiItems.button(services, Material.LIME_DYE, "gui.buttons.confirm"));
