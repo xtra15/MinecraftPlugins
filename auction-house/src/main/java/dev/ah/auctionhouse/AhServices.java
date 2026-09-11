@@ -20,6 +20,7 @@ import dev.ah.core.sweep.ExpirySweep;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.List;
@@ -75,14 +76,14 @@ public class AhServices {
         this.allowedDurationsMs = cfg.getLongList("durations-ms");
         this.sweepIntervalMs = cfg.getLong("sweep-interval-seconds", 60L) * 1000L;
         this.pageSize = cfg.getInt("page-size", 36);
-        this.guiFillerMaterial = parseMaterial(cfg.getString("fill-item", "BLACK_STAINED_GLASS_PANE"));
+        this.guiFillerMaterial = parseMaterial(cfg.getString("fill-item", "GRAY_STAINED_GLASS_PANE"));
     }
 
     private static Material parseMaterial(String name) {
         try {
             return Material.valueOf(name);
         } catch (IllegalArgumentException | NullPointerException e) {
-            return Material.BLACK_STAINED_GLASS_PANE;
+            return Material.GRAY_STAINED_GLASS_PANE;
         }
     }
 
@@ -108,4 +109,8 @@ public class AhServices {
     public long sweepIntervalMs() { return sweepIntervalMs; }
     public int pageSize() { return pageSize; }
     public Material guiFillerMaterial() { return guiFillerMaterial; }
+
+    public ItemStack fillerItem() {
+        return new ItemStack(guiFillerMaterial, 1);
+    }
 }

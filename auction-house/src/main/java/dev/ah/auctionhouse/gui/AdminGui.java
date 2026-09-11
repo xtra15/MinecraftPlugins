@@ -37,7 +37,7 @@ public class AdminGui {
 
         ChestGui gui = new ChestGui(6, services.messages().get("admin.title",
                 Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(pages))));
-        gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
+        gui.fill(services.fillerItem());
         gui.on(0, () -> new AhMainGui(services).open(admin))
                 .set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
 
@@ -100,7 +100,7 @@ public class AdminGui {
 
         ChestGui gui = new ChestGui(6, services.messages().get("admin.user.title",
                 Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(totalPages))));
-        gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
+        gui.fill(services.fillerItem());
         gui.on(0, () -> open(admin)).set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
 
         List<Listing> ownerListings = services.db().transact(c -> services.listings().byOwner(uuid, perPage, pageIndex * perPage));
@@ -144,7 +144,7 @@ public class AdminGui {
 
         ChestGui gui = new ChestGui(6, services.messages().get("admin.sales.title",
                 Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(pages))));
-        gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
+        gui.fill(services.fillerItem());
         gui.on(0, () -> open(admin)).set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
         int slot = 9;
         for (SalesLogRow row : services.db().transact(c -> services.sales().recent(perPage, pageIndex * perPage))) {

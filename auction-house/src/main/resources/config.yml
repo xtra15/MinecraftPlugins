@@ -11,4 +11,4 @@ durations-ms:
 default-duration-ms: 86400000
 sweep-interval-seconds: 60
 page-size: 36
-fill-item: "BLACK_STAINED_GLASS_PANE"
+fill-item: "GRAY_STAINED_GLASS_PANE"

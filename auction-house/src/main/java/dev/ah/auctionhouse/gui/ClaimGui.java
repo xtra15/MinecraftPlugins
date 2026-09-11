@@ -37,7 +37,7 @@ public class ClaimGui {
 
         ChestGui gui = new ChestGui(6, services.messages().get("claims.title",
                 Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(totalPages))));
-        gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
+        gui.fill(services.fillerItem());
         gui.on(0, () -> new AhMainGui(services).open(player))
                 .set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
 
