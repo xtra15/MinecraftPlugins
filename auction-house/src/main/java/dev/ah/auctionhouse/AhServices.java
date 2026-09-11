@@ -62,7 +62,7 @@ public class AhServices {
         this.notifications = new SqlNotificationStore(db);
         this.decisions = new OfferDecisionService(db, listings, offers, claims, sales);
         this.sweep = new ExpirySweep(db, listings, offers, claims, notifications);
-        this.messages = new MessageRepository(new File(plugin.getDataFolder(), "lang.yml"));
+        this.messages = new MessageRepository(new File(plugin.getDataFolder(), "lang.yml"), plugin.getResource("lang.yml"));
         this.sounds = new SoundRegistry(new File(plugin.getDataFolder(), "sounds.yml"));
         this.gui = new GuiManager();
         this.platform = new PlatformDetector();

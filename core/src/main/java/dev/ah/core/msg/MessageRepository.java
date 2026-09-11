@@ -3,6 +3,9 @@ package dev.ah.core.msg;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,8 +13,10 @@ public class MessageRepository {
     private final YamlConfiguration lang;
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
-    public MessageRepository(File langFile) {
+    public MessageRepository(File langFile, InputStream bundled) {
+        YamlConfiguration defaults = YamlConfiguration.loadConfiguration(new InputStreamReader(bundled, StandardCharsets.UTF_8));
         this.lang = YamlConfiguration.loadConfiguration(langFile);
+        this.lang.setDefaults(defaults);
     }
 
     public String get(String key) {
