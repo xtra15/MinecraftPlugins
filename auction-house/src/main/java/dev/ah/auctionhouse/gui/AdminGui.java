@@ -27,6 +27,8 @@ public class AdminGui {
     public void open(Player admin) {
         ChestGui gui = new ChestGui(6, services.messages().get("admin.title"));
         gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
+        gui.on(0, () -> new AhMainGui(services).open(admin))
+                .set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
 
         List<UUID> players = services.listings().activeOwners(1000);
         int slot = 9;
@@ -57,6 +59,7 @@ public class AdminGui {
         ChestGui gui = new ChestGui(6, services.messages().get("admin.user.title",
                 Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(totalPages))));
         gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
+        gui.on(0, () -> open(admin)).set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
         List<Listing> ownerListings = services.listings().byOwner(uuid, perPage, pageIndex * perPage);
         java.util.Map<Long, Long> pendingOffers = services.offers()
                 .countPendingByListings(ownerListings.stream().map(Listing::id).toList());
@@ -65,7 +68,7 @@ public class AdminGui {
             if (slot > 44) break;
             List<ItemStack> items = ItemBundleCodec.decode(l.itemData());
             if (items.isEmpty()) { slot++; continue; }
-            ItemStack icon = items.get(0).clone();
+            ItemStack icon = IconUtil.clean(items.get(0));
             long offers = pendingOffers.getOrDefault(l.id(), 0L);
             icon.editMeta(m -> m.lore(List.of(MM.deserialize(services.messages().get("admin.user.listing", Map.of(
                     "id", String.valueOf(l.id()),
@@ -91,12 +94,13 @@ public class AdminGui {
     private void openSalesLog(Player admin) {
         ChestGui gui = new ChestGui(6, services.messages().get("admin.sales.title"));
         gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
+        gui.on(0, () -> open(admin)).set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
         int slot = 9;
         for (SalesLogRow row : services.sales().recent(36)) {
             if (slot > 44) break;
             List<ItemStack> items = ItemBundleCodec.decode(row.itemData());
             if (items.isEmpty()) { slot++; continue; }
-            ItemStack icon = items.get(0).clone();
+            ItemStack icon = IconUtil.clean(items.get(0));
             String seller = Bukkit.getOfflinePlayer(row.seller()).getName();
             String buyer = Bukkit.getOfflinePlayer(row.buyer()).getName();
             icon.editMeta(m -> m.lore(List.of(MM.deserialize(services.messages().get("admin.sales.row", Map.of(

@@ -38,10 +38,11 @@ public class OfferBoardGui {
 
         ChestGui gui = new ChestGui(6, services.messages().get("offer-board.title"));
         gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
+        gui.on(0, this::back).set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
 
         List<ItemStack> auctioned = ItemBundleCodec.decode(listing.itemData());
         for (int i = 0; i < Math.min(auctioned.size(), 5); i++) {
-            gui.set(9 + i, auctioned.get(i).clone());
+            gui.set(9 + i, IconUtil.clean(auctioned.get(i)));
         }
 
         if (pending.isEmpty()) {
@@ -64,7 +65,7 @@ public class OfferBoardGui {
         gui.set(4, by);
 
         for (int i = 0; i < Math.min(offered.size(), 12); i++) {
-            gui.set(18 + i, offered.get(i).clone());
+            gui.set(18 + i, IconUtil.clean(offered.get(i)));
         }
 
         boolean manage = viewer.getUniqueId().equals(listing.owner()) || viewer.hasPermission("ah.admin");
@@ -100,12 +101,22 @@ public class OfferBoardGui {
         open();
     }
 
+private void back() {
+        Listing listing = services.listings().byId(listingId).orElse(null);
+        if (listing != null && viewer.getUniqueId().equals(listing.owner())) {
+            new AdminGui(services).openMyListings(viewer);
+        } else {
+            new AdminGui(services).open(viewer);
+        }
+    }
+
     private void openItems(Offer offer) {
         ChestGui viewerGui = new ChestGui(6, services.messages().get("offer-board.items-viewer"));
         viewerGui.fill(new ItemStack(services.guiFillerMaterial(), 1));
+        viewerGui.on(53, this::open).set(53, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
         List<ItemStack> items = ItemBundleCodec.decode(offer.itemsData());
         for (int i = 0; i < Math.min(items.size(), 45); i++) {
-            viewerGui.set(i, items.get(i).clone());
+            viewerGui.set(i, IconUtil.clean(items.get(i)));
         }
         viewerGui.open(viewer);
     }

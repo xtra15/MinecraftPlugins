@@ -44,14 +44,18 @@ admin:
 gui:
   main:
     title: "<gold>Auctions"
+    stats-title: "<gold>Auction House"
+    stats-listings: "<gray>Your active listings: <white><count>"
+    stats-offers: "<gray>Your pending offers: <white><count>"
+    stats-claims: "<gray>Unclaimed items: <white><count>"
   buttons:
+    back: "<red>« Back"
     next: "<green>Next page"
     next-lore: "<gray>Click to show more listings"
     prev: "<green>Previous page"
     prev-lore: "<gray>Click to go back"
     search: "<yellow>Search"
     search-lore: "<gray>Filter listings by item name"
-    search-prompt: "<yellow>Type the item name in chat to search. Example: <white>diamond"
     sort: "<yellow>Sort listings"
     sort-lore: "<gray>Click to toggle newest / oldest"
     claim: "<yellow>Claim items"
@@ -59,6 +63,10 @@ gui:
     confirm: "<green>Confirm"
     cancel: "<red>Cancel"
     close: "<red>Close"
+    sell: "<yellow>Sell an item"
+    sell-lore: "<gray>List an item for trade"
+    my: "<yellow>My listings"
+    my-lore: "<gray>View and manage your listings"
 offer-board:
   title: "<gold>Offers"
   items-viewer: "<gold>Offered items"

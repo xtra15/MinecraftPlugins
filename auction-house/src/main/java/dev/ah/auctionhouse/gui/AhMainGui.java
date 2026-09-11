@@ -6,11 +6,11 @@ import dev.ah.core.gui.ChestGui;
 import dev.ah.core.listing.Listing;
 import dev.ah.core.misc.ItemBundleCodec;
 import dev.ah.core.msg.SoundRegistry;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -52,24 +52,36 @@ public class AhMainGui {
         ChestGui gui = new ChestGui(6, services.messages().get("gui.main.title"));
         gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
 
+        ItemStack stats = new ItemStack(Material.BOOK, 1);
+        long myListings = services.listings().countActiveBy(player.getUniqueId());
+        long myOffers = services.offers().countPendingByOfferer(player.getUniqueId());
+        int unclaimed = services.claims().unclaimedFor(player.getUniqueId()).size();
+        stats.editMeta(meta -> {
+            meta.displayName(MM.deserialize(services.messages().get("gui.main.stats-title")));
+            meta.lore(List.of(
+                    MM.deserialize(services.messages().get("gui.main.stats-listings", Map.of("count", String.valueOf(myListings)))),
+                    MM.deserialize(services.messages().get("gui.main.stats-offers", Map.of("count", String.valueOf(myOffers)))),
+                    MM.deserialize(services.messages().get("gui.main.stats-claims", Map.of("count", String.valueOf(unclaimed))))));
+        });
+        gui.set(0, stats);
+
         int slot = 9;
-        java.util.Map<Long, Long> pendingOffers = services.offers()
+        Map<Long, Long> pendingOffers = services.offers()
                 .countPendingByListings(pageRows.stream().map(Listing::id).toList());
         for (Listing listing : pageRows) {
             if (slot > 44) break;
             List<ItemStack> items = ItemBundleCodec.decode(listing.itemData());
             if (items.isEmpty()) { slot++; continue; }
-            ItemStack icon = items.get(0).clone();
-            ItemMeta meta = icon.getItemMeta();
+            ItemStack icon = IconUtil.clean(items.get(0));
             long offers = pendingOffers.getOrDefault(listing.id(), 0L);
             String price = services.isEconomyEnabled() && listing.price() != null
                     ? String.valueOf(listing.price()) : "—";
-            meta.lore(List.of(
+            List<Component> lore = List.of(
                     MM.deserialize(services.messages().get("listings.lore.price", Map.of("price", price))),
                     MM.deserialize(services.messages().get("listings.lore.offers", Map.of("count", String.valueOf(offers)))),
                     MM.deserialize(services.messages().get("listings.lore.remaining",
-                            Map.of("minutes", String.valueOf((listing.expiresAt() - System.currentTimeMillis()) / 60000))))));
-            icon.setItemMeta(meta);
+                            Map.of("minutes", String.valueOf((listing.expiresAt() - System.currentTimeMillis()) / 60000)))));
+            icon.editMeta(meta -> meta.lore(lore));
             long listingId = listing.id();
             gui.on(slot, clk -> { clk.player().closeInventory(); new OfferGui(services, listingId).open(clk.player()); });
             gui.set(slot, icon);
@@ -80,15 +92,19 @@ public class AhMainGui {
                 "gui.buttons.next", "gui.buttons.next-lore", Map.of()));
         gui.on(45, () -> open(player, pageIndex - 1)).set(45, GuiItems.button(services, Material.ARROW,
                 "gui.buttons.prev", "gui.buttons.prev-lore", Map.of()));
-        gui.on(49, this::toggleSort).set(49, GuiItems.button(services, Material.COMPASS,
-                "gui.buttons.sort", "gui.buttons.sort-lore", Map.of()));
         gui.on(47, clk -> {
             clk.player().closeInventory();
             ChatSearchListener.prompt(clk.player(), services.messages().get("gui.buttons.search-prompt"));
         }).set(47, GuiItems.button(services, Material.OAK_SIGN,
                 "gui.buttons.search", "gui.buttons.search-lore", Map.of()));
+        gui.on(48, () -> { toggleSort(); open(player, pageIndex); }).set(48, GuiItems.button(services, Material.COMPASS,
+                "gui.buttons.sort", "gui.buttons.sort-lore", Map.of()));
+        gui.on(49, () -> new SellGui(services).open(player)).set(49, GuiItems.button(services, Material.EMERALD_BLOCK,
+                "gui.buttons.sell", "gui.buttons.sell-lore", Map.of()));
         gui.on(50, () -> new ClaimGui(services).open(player, 0)).set(50, GuiItems.button(services, Material.CHEST,
                 "gui.buttons.claim", "gui.buttons.claim-lore", Map.of()));
+        gui.on(51, () -> new AdminGui(services).openMyListings(player)).set(51, GuiItems.button(services, Material.WRITABLE_BOOK,
+                "gui.buttons.my", "gui.buttons.my-lore", Map.of()));
         services.sounds().play(player, SoundRegistry.Event.OPEN);
         gui.open(player);
     }
