@@ -31,6 +31,7 @@ public class SellGui {
     }
 
     private void onConfirm(Player player, DepositGui gui) {
+        if (gui.isConfirmed()) return;
         List<ItemStack> items = gui.collect();
         long duration = services.defaultDurationMs();
         AhActions.CreateResult r = new AhActions(services).createListing(player, items, duration);

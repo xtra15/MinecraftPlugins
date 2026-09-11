@@ -62,4 +62,53 @@ class SqliteDatabaseTest {
         }
         db.close();
     }
+
+    @Test
+    void nestedTransactionRollsBackOnInnerRuntimeFailure() throws SQLException {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        db.init();
+        assertThrows(RuntimeException.class, () -> db.transact(c -> {
+            db.transact(c2 -> {
+                try (Statement st = c2.createStatement()) {
+                    st.executeUpdate("INSERT INTO notifications (player_uuid, message_key, created_at) VALUES ('u', 'x', 1)");
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                throw new RuntimeException("store failure");
+            });
+            return null;
+        }));
+        try (Statement st = db.conn().createStatement();
+             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM notifications")) {
+            rs.next();
+            assertEquals(0, rs.getInt(1), "inner runtime failure must roll back the whole outer transaction");
+        }
+        db.close();
+    }
+
+    @Test
+    void nestedTransactionCommitsOnceAtOuterBoundary() throws SQLException {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        db.init();
+        db.transact(c -> {
+            db.transact(c2 -> {
+                try (Statement st = c2.createStatement()) {
+                    st.executeUpdate("INSERT INTO notifications (player_uuid, message_key, created_at) VALUES ('a', 'x', 1)");
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                return null;
+            });
+            try (Statement st = c.createStatement()) {
+                st.executeUpdate("INSERT INTO notifications (player_uuid, message_key, created_at) VALUES ('b', 'x', 1)");
+            }
+            return null;
+        });
+        try (Statement st = db.conn().createStatement();
+             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM notifications")) {
+            rs.next();
+            assertEquals(2, rs.getInt(1));
+        }
+        db.close();
+    }
 }

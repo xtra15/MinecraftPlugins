@@ -38,6 +38,10 @@ public class ClaimGui {
         gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
         gui.fillRect(9, 44, null);
 
+        if (rows.isEmpty()) {
+            gui.set(22, GuiItems.button(services, Material.PAPER, "claims.empty"));
+        }
+
         int slot = 9;
         for (ClaimRow row : pager.page(pageIndex)) {
             if (slot > 44) break;
@@ -61,8 +65,10 @@ public class ClaimGui {
             slot++;
         }
 
-        gui.on(53, () -> open(player, pageIndex + 1)).set(53, arrow("NEXT"));
-        gui.on(45, () -> open(player, pageIndex - 1)).set(45, arrow("PREV"));
+        gui.on(53, () -> open(player, pageIndex + 1)).set(53, GuiItems.button(services, Material.ARROW,
+                "gui.buttons.next", "gui.buttons.next-lore", Map.of()));
+        gui.on(45, () -> open(player, pageIndex - 1)).set(45, GuiItems.button(services, Material.ARROW,
+                "gui.buttons.prev", "gui.buttons.prev-lore", Map.of()));
         gui.on(49, () -> player.closeInventory()).set(49, GuiItems.button(services, Material.BARRIER, "gui.buttons.close"));
         services.sounds().play(player, SoundRegistry.Event.OPEN);
         gui.open(player);
@@ -88,11 +94,5 @@ public class ClaimGui {
         player.sendMessage(MM.deserialize(services.messages().get("claims.withdrawn")));
         services.sounds().play(player, SoundRegistry.Event.CLICK);
         open(player, 0);
-    }
-
-    private ItemStack arrow(String label) {
-        ItemStack i = new ItemStack(Material.ARROW, 1);
-        i.editMeta(m -> m.displayName(MM.deserialize("<gray>" + label)));
-        return i;
     }
 }

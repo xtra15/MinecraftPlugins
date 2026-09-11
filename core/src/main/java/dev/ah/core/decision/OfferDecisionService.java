@@ -2,22 +2,25 @@ package dev.ah.core.decision;
 
 import dev.ah.core.claim.ClaimRow;
 import dev.ah.core.claim.ClaimStore;
+import dev.ah.core.db.SqliteDatabase;
 import dev.ah.core.listing.Listing;
 import dev.ah.core.listing.ListingStore;
 import dev.ah.core.offer.Offer;
 import dev.ah.core.offer.OfferStore;
 import dev.ah.core.saleslog.SalesLogRow;
 import dev.ah.core.saleslog.SalesLogStore;
-import java.util.Optional;
 import java.util.UUID;
 
 public class OfferDecisionService {
+    private final SqliteDatabase db;
     private final ListingStore listings;
     private final OfferStore offers;
     private final ClaimStore claims;
     private final SalesLogStore sales;
 
-    public OfferDecisionService(ListingStore listings, OfferStore offers, ClaimStore claims, SalesLogStore sales) {
+    public OfferDecisionService(SqliteDatabase db, ListingStore listings, OfferStore offers,
+                                ClaimStore claims, SalesLogStore sales) {
+        this.db = db;
         this.listings = listings;
         this.offers = offers;
         this.claims = claims;
@@ -35,17 +38,15 @@ public class OfferDecisionService {
     }
 
     private Result decide(UUID actor, long offerId, boolean accept) {
-        Optional<Offer> maybeOffer = offers.byId(offerId);
-        if (maybeOffer.isEmpty()) return Result.NOT_FOUND;
-        Offer offer = maybeOffer.get();
-        Optional<Listing> maybeListing = listings.byId(offer.listingId());
-        if (maybeListing.isEmpty()) return Result.NOT_FOUND;
-        Listing listing = maybeListing.get();
-        if (!listing.owner().equals(actor)) return Result.NOT_OWNER;
-        if (!offer.isPending()) return Result.NOT_PENDING;
-        if (accept && !listing.isActive()) return Result.NOT_PENDING;
+        return db.transact(c -> {
+            Offer offer = offers.byId(offerId).orElse(null);
+            if (offer == null) return Result.NOT_FOUND;
+            if (!offer.isPending()) return Result.NOT_PENDING;
+            Listing listing = listings.byId(offer.listingId()).orElse(null);
+            if (listing == null) return Result.NOT_FOUND;
+            if (!listing.owner().equals(actor)) return Result.NOT_OWNER;
+            if (accept && !listing.isActive()) return Result.NOT_PENDING;
 
-        try {
             long now = System.currentTimeMillis();
             if (accept) {
                 // seller receives the offered items
@@ -68,8 +69,6 @@ public class OfferDecisionService {
                 offers.updateStatusIfPending(offer.id(), "REJECTED", now);
             }
             return Result.SUCCESS;
-        } catch (RuntimeException e) {
-            return Result.ERROR;
-        }
+        });
     }
 }

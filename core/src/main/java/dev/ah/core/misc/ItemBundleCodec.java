@@ -31,12 +31,18 @@ public final class ItemBundleCodec {
         if (base64 == null || base64.isBlank()) {
             throw new IllegalArgumentException("empty item data");
         }
+        Object raw;
         try (ByteArrayInputStream bytes = new ByteArrayInputStream(Base64.getDecoder().decode(base64));
              ObjectInputStream in = new ObjectInputStream(bytes)) {
-            return (List<Map<String, Object>>) in.readObject();
+            raw = in.readObject();
         } catch (IOException | ClassNotFoundException e) {
             throw new IllegalArgumentException("corrupt item data", e);
         }
+        if (!(raw instanceof List<?> list)) throw new IllegalArgumentException("corrupt item data");
+        for (Object element : list) {
+            if (!(element instanceof Map<?, ?>)) throw new IllegalArgumentException("corrupt item data");
+        }
+        return (List<Map<String, Object>>) list;
     }
 
     public static String encode(List<ItemStack> items) {

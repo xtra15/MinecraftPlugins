@@ -37,7 +37,7 @@ public class AdminGui {
             String name = op.getName() == null ? uuid.toString().substring(0, 8) : op.getName();
             ItemStack head = new ItemStack(Material.PLAYER_HEAD, 1);
             head.editMeta(meta -> meta.displayName(MM.deserialize("<gold>" + name)));
-            gui.on(slot, clk -> openUser(admin, uuid)).set(slot, head);
+            gui.on(slot, clk -> openUser(admin, uuid, 0)).set(slot, head);
             slot++;
         }
 
@@ -46,11 +46,20 @@ public class AdminGui {
         gui.open(admin);
     }
 
-    void openUser(Player admin, UUID uuid) {
-        ChestGui gui = new ChestGui(6, services.messages().get("admin.user.title"));
+    void openUser(Player admin, UUID uuid, int page) {
+        int perPage = services.pageSize();
+        long total = services.listings().countBy(uuid);
+        int totalPages = Math.max(1, (int) ((total + perPage - 1) / perPage));
+        final int pageIndex;
+        if (page < 0) pageIndex = 0;
+        else if (page >= totalPages) pageIndex = totalPages - 1;
+        else pageIndex = page;
+
+        ChestGui gui = new ChestGui(6, services.messages().get("admin.user.title",
+                Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(totalPages))));
         gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
         gui.fillRect(9, 44, null);
-        List<Listing> ownerListings = services.listings().byOwner(uuid, 100, 0);
+        List<Listing> ownerListings = services.listings().byOwner(uuid, perPage, pageIndex * perPage);
         java.util.Map<Long, Long> pendingOffers = services.offers()
                 .countPendingByListings(ownerListings.stream().map(Listing::id).toList());
         int slot = 9;
@@ -69,12 +78,16 @@ public class AdminGui {
             gui.set(slot, icon);
             slot++;
         }
+        gui.on(53, () -> openUser(admin, uuid, pageIndex + 1)).set(53, GuiItems.button(services, Material.ARROW,
+                "gui.buttons.next", "gui.buttons.next-lore", Map.of()));
+        gui.on(45, () -> openUser(admin, uuid, pageIndex - 1)).set(45, GuiItems.button(services, Material.ARROW,
+                "gui.buttons.prev", "gui.buttons.prev-lore", Map.of()));
         gui.open(admin);
     }
 
     /** Reused by /ah my — shows the player's own listings. */
     public void openMyListings(Player player) {
-        openUser(player, player.getUniqueId());
+        openUser(player, player.getUniqueId(), 0);
     }
 
     private void openSalesLog(Player admin) {

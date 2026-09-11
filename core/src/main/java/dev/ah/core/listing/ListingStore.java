@@ -14,5 +14,6 @@ public interface ListingStore {
     long countActive();
     long countActive(String search);
     long countActiveBy(UUID owner);
+    long countBy(UUID owner);
     List<UUID> activeOwners(int limit);
 }

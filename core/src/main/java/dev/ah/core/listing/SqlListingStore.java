@@ -60,12 +60,12 @@ public class SqlListingStore implements ListingStore {
     public List<Listing> activePage(int limit, int offset, String search, boolean oldestFirst) {
         String order = oldestFirst ? "created_at ASC, id ASC" : "created_at DESC, id DESC";
         StringBuilder sql = new StringBuilder("SELECT * FROM listings WHERE status = 'ACTIVE'");
-        if (search != null && !search.isBlank()) sql.append(" AND search_text LIKE ?");
+        if (search != null && !search.isBlank()) sql.append(" AND search_text LIKE ? ESCAPE '\\'");
         sql.append(" ORDER BY ").append(order).append(" LIMIT ? OFFSET ?");
         return db.transact(c -> {
             try (PreparedStatement ps = c.prepareStatement(sql.toString())) {
                 int i = 1;
-                if (search != null && !search.isBlank()) ps.setString(i++, "%" + search.toLowerCase(Locale.ROOT) + "%");
+                if (search != null && !search.isBlank()) ps.setString(i++, contains(search));
                 ps.setInt(i++, limit);
                 ps.setInt(i, offset);
                 try (ResultSet rs = ps.executeQuery()) {
@@ -101,8 +101,9 @@ public class SqlListingStore implements ListingStore {
     @Override
     public List<Listing> expiredActiveBefore(long nowMs) {
         return db.transact(c -> {
-            try (PreparedStatement ps = c.prepareStatement(
-                    "SELECT * FROM listings WHERE status = 'ACTIVE' AND expires_at <= ? ORDER BY expires_at ASC")) {
+            try (PreparedStatement ps = c.prepareStatement("""
+                    SELECT * FROM listings WHERE status = 'ACTIVE' AND expires_at <= ?
+                    ORDER BY expires_at ASC LIMIT 256""")) {
                 ps.setLong(1, nowMs);
                 try (ResultSet rs = ps.executeQuery()) {
                     List<Listing> out = new ArrayList<>();
@@ -137,11 +138,11 @@ public class SqlListingStore implements ListingStore {
     @Override
     public long countActive(String search) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM listings WHERE status = 'ACTIVE'");
-        if (search != null && !search.isBlank()) sql.append(" AND search_text LIKE ?");
+        if (search != null && !search.isBlank()) sql.append(" AND search_text LIKE ? ESCAPE '\\'");
         return db.transact(c -> {
             try (PreparedStatement ps = c.prepareStatement(sql.toString())) {
                 if (search != null && !search.isBlank()) {
-                    ps.setString(1, "%" + search.toLowerCase(Locale.ROOT) + "%");
+                    ps.setString(1, contains(search));
                 }
                 try (ResultSet rs = ps.executeQuery()) {
                     rs.next();
@@ -157,6 +158,21 @@ public class SqlListingStore implements ListingStore {
     public long countActiveBy(UUID owner) {
         return db.transact(c -> {
             try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM listings WHERE owner_uuid = ? AND status = 'ACTIVE'")) {
+                ps.setString(1, owner.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    return rs.getLong(1);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Override
+    public long countBy(UUID owner) {
+        return db.transact(c -> {
+            try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM listings WHERE owner_uuid = ?")) {
                 ps.setString(1, owner.toString());
                 try (ResultSet rs = ps.executeQuery()) {
                     rs.next();
@@ -186,6 +202,14 @@ public class SqlListingStore implements ListingStore {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private static String contains(String term) {
+        String escaped = term.toLowerCase(Locale.ROOT)
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+        return "%" + escaped + "%";
     }
 
     private Listing map(ResultSet rs) throws SQLException {

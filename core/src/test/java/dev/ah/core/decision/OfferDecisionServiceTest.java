@@ -27,7 +27,7 @@ class OfferDecisionServiceTest {
         var claims = new SqlClaimStore(db);
         var sales = new SqlSalesLogStore(db);
         return new Fixture(db, listings, offers, claims, sales,
-                new OfferDecisionService(listings, offers, claims, sales));
+                new OfferDecisionService(db, listings, offers, claims, sales));
     }
 
     @Test

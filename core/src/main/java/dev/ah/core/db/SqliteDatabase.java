@@ -11,6 +11,7 @@ import java.util.UUID;
 public final class SqliteDatabase implements AutoCloseable {
     private final Connection connection;
     private final ThreadLocal<Boolean> inTx = ThreadLocal.withInitial(() -> false);
+    private boolean closed;
 
     public SqliteDatabase(File file) {
         try {
@@ -103,9 +104,14 @@ public final class SqliteDatabase implements AutoCloseable {
                     try { connection.rollback(); } catch (SQLException ignored) {}
                 }
                 throw new RuntimeException("database transaction failed", e);
+            } catch (RuntimeException e) {
+                if (!already) {
+                    try { connection.rollback(); } catch (SQLException ignored) {}
+                }
+                throw e;
             } finally {
                 if (!already) {
-                    inTx.set(false);
+                    inTx.remove();
                     try { connection.setAutoCommit(true); } catch (SQLException ignored) {}
                 }
             }
@@ -127,6 +133,8 @@ public final class SqliteDatabase implements AutoCloseable {
 
     @Override
     public synchronized void close() {
+        if (closed) return;
+        closed = true;
         try { connection.close(); } catch (SQLException ignored) {}
     }
 

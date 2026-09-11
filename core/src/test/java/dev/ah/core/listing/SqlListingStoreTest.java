@@ -72,6 +72,33 @@ class SqlListingStoreTest {
     }
 
     @Test
+    void searchWildcardsAreLiterals() {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        SqlListingStore s = store(db);
+        s.create(new Listing(0, UUID.randomUUID(), "A", null, 0, 3, 1000, "ACTIVE", "iron ingot"));
+        s.create(new Listing(0, UUID.randomUUID(), "B", null, 0, 2, 1000, "ACTIVE", "diamond"));
+
+        assertEquals(0, s.countActive("%"));
+        assertEquals(0, s.countActive("_"));
+        assertEquals(0, s.countActive("iron_ingot"));
+        assertEquals(1, s.countActive("iron ingot"));
+        assertEquals(1, s.activePage(10, 0, "iron ingot", false).size());
+        db.close();
+    }
+
+    @Test
+    void countByCountsAllStatuses() {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        SqlListingStore s = store(db);
+        UUID bob = UUID.randomUUID();
+        s.create(new Listing(0, bob, "ACT", null, 0, 3, 1000, "ACTIVE"));
+        s.create(new Listing(0, bob, "SOL", null, 0, 2, 1000, "SOLD"));
+        s.create(new Listing(0, UUID.randomUUID(), "OTH", null, 0, 1, 1000, "ACTIVE"));
+        assertEquals(2, s.countBy(bob));
+        db.close();
+    }
+
+    @Test
     void activeOwnersReturnsDistinctOwnersOfActiveListings() {
         SqliteDatabase db = SqliteDatabase.inMemory();
         SqlListingStore s = store(db);

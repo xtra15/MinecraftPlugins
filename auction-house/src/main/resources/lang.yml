@@ -11,7 +11,6 @@ checks:
   listing-expired: "<red>This listing has expired."
 listings:
   created: "<green>Listing created."
-  cancelled: "<green>Listing cancelled; items sent to your claims."
   expired: "<yellow>One of your listings expired and its items are in your claims."
   lore:
     price: "<gray>BIN: <white><price>"
@@ -36,7 +35,7 @@ admin:
   no-permission: "<red>You do not have permission."
   title: "<gold>Admin <gray>· users"
   user:
-    title: "<gold>Listings"
+    title: "<gold>Listings <gray>· page <page>/<pages>"
     listing: "<gray>#<id> · <status> · <offers> offer(s)"
   sales:
     title: "<gold>Sales log"
@@ -71,5 +70,4 @@ sell:
 offer:
   title: "<gold>Make an offer"
 errors:
-  economy: "<red>Economy is disabled."
   unknown: "<red>Something went wrong."

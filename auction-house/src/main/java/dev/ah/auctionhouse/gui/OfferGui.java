@@ -42,6 +42,7 @@ public class OfferGui {
     }
 
     private void onConfirm(Player player, DepositGui gui) {
+        if (gui.isConfirmed()) return;
         List<ItemStack> items = gui.collect();
         AhActions.OfferResult r = new AhActions(services).makeOffer(player, listingId, items);
         if (r == AhActions.OfferResult.SUCCESS) {

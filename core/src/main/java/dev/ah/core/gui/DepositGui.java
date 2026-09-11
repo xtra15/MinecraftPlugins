@@ -47,6 +47,10 @@ public class DepositGui extends ChestGui {
         return true;
     }
 
+    public boolean isDepositSlot(int slot) {
+        return slot >= minSlot && slot <= maxSlot;
+    }
+
     public void markConfirmed() {
         this.confirmed = true;
     }

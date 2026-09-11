@@ -50,7 +50,6 @@ public class AhServices {
     public AhServices(JavaPlugin plugin) {
         plugin.saveResource("config.yml", false);
         plugin.saveResource("lang.yml", false);
-        plugin.saveResource("gui.yml", false);
         plugin.saveResource("sounds.yml", false);
         FileConfiguration cfg = YamlConfiguration.loadConfiguration(new File(plugin.getDataFolder(), "config.yml"));
 
@@ -61,8 +60,8 @@ public class AhServices {
         this.claims = new SqlClaimStore(db);
         this.sales = new SqlSalesLogStore(db);
         this.notifications = new SqlNotificationStore(db);
-        this.decisions = new OfferDecisionService(listings, offers, claims, sales);
-        this.sweep = new ExpirySweep(db, listings, offers, claims);
+        this.decisions = new OfferDecisionService(db, listings, offers, claims, sales);
+        this.sweep = new ExpirySweep(db, listings, offers, claims, notifications);
         this.messages = new MessageRepository(new File(plugin.getDataFolder(), "lang.yml"));
         this.sounds = new SoundRegistry(new File(plugin.getDataFolder(), "sounds.yml"));
         this.gui = new GuiManager();

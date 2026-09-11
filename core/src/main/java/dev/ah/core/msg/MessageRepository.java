@@ -1,9 +1,7 @@
 package dev.ah.core.msg;
 
-import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import java.io.File;
 import java.util.Map;
 import java.util.Set;
@@ -27,10 +25,6 @@ public class MessageRepository {
             value = value.replace("{" + e.getKey() + "}", e.getValue());
         }
         return value;
-    }
-
-    public Component parse(Player player, String raw) {
-        return MM.deserialize(raw);
     }
 
     public Set<String> keys() {

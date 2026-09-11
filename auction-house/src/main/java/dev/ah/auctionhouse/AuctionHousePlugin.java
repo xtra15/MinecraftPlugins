@@ -25,7 +25,10 @@ public class AuctionHousePlugin extends JavaPlugin {
     @Override
     public void onDisable() {
         stopSweep();
-        if (services != null) services.close();
+        if (services != null) {
+            services.gui().returnAll();
+            services.close();
+        }
     }
 
     private void startSweep() {
@@ -49,7 +52,10 @@ public class AuctionHousePlugin extends JavaPlugin {
 
     public void reloadServices() {
         stopSweep();
-        if (services != null) services.close();
+        if (services != null) {
+            services.gui().returnAll();
+            services.close();
+        }
         services = new AhServices(this);
         startSweep();
         getLogger().info("AuctionHouse reloaded");
