@@ -24,15 +24,16 @@ public class ClaimGui {
     }
 
     public void open(Player player, int page) {
-        List<ClaimRow> rows = services.claims().unclaimedFor(player.getUniqueId());
         int perPage = services.pageSize();
-        var pager = new dev.ah.core.misc.Pager<>(rows, perPage);
-        int totalPages = pager.pages();
+        long total = services.claims().countUnclaimed(player.getUniqueId());
+        int totalPages = Math.max(1, (int) ((total + perPage - 1) / perPage));
 
         final int pageIndex;
         if (page < 0) pageIndex = 0;
         else if (page >= totalPages) pageIndex = totalPages - 1;
         else pageIndex = page;
+
+        List<ClaimRow> rows = services.claims().unclaimedPage(player.getUniqueId(), perPage, pageIndex * perPage);
 
         ChestGui gui = new ChestGui(6, services.messages().get("claims.title",
                 Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(totalPages))));
@@ -40,23 +41,24 @@ public class ClaimGui {
         gui.on(0, () -> new AhMainGui(services).open(player))
                 .set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
 
-        if (rows.isEmpty()) {
+        if (total == 0) {
             gui.set(22, GuiItems.button(services, Material.PAPER, "claims.empty"));
         }
 
         int slot = 9;
-        for (ClaimRow row : pager.page(pageIndex)) {
+        for (ClaimRow row : rows) {
             if (slot > 44) break;
-            List<ItemStack> items = ItemBundleCodec.decode(row.itemsData());
-            if (items.isEmpty()) { slot++; continue; }
-            ItemStack icon = items.get(0).clone();
+            ItemCache.CachedIcon cached = ItemCache.icon("c" + row.id(), row.itemsData());
+            if (cached == null) { slot++; continue; }
+            ItemStack icon = cached.cloneItem();
+            int count = cached.count();
             icon.editMeta(meta -> {
                 meta.displayName(MM.deserialize(services.messages().get("claims.row", Map.of(
-                        "count", String.valueOf(items.size()),
+                        "count", String.valueOf(count),
                         "date", new SimpleDateFormat("MMM d HH:mm").format(new Date(row.createdAt()))))));
-                if (items.size() > 1) {
+                if (count > 1) {
                     meta.lore(List.of(MM.deserialize(services.messages().get("claims.more",
-                            Map.of("extra", String.valueOf(items.size() - 1))))));
+                            Map.of("extra", String.valueOf(count - 1))))));
                 } else {
                     meta.lore(List.of());
                 }
@@ -98,9 +100,7 @@ public class ClaimGui {
             services.sounds().play(player, SoundRegistry.Event.ERROR);
             return;
         }
-        for (ItemStack item : all) {
-            player.getInventory().addItem(item);
-        }
+        player.getInventory().addItem(all.toArray(new ItemStack[0]));
         long now = System.currentTimeMillis();
         for (ClaimRow row : rows) {
             services.claims().markClaimed(row.id(), now);

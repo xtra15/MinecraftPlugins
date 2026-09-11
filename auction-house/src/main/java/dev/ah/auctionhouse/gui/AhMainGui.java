@@ -4,7 +4,6 @@ import dev.ah.auctionhouse.AhServices;
 import dev.ah.auctionhouse.listener.ChatSearchListener;
 import dev.ah.core.gui.ChestGui;
 import dev.ah.core.listing.Listing;
-import dev.ah.core.misc.ItemBundleCodec;
 import dev.ah.core.msg.SoundRegistry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -69,7 +68,7 @@ public class AhMainGui {
         ItemStack stats = new ItemStack(Material.BOOK, 1);
         long myListings = services.listings().countActiveBy(player.getUniqueId());
         long myOffers = services.offers().countPendingByOfferer(player.getUniqueId());
-        int unclaimed = services.claims().unclaimedFor(player.getUniqueId()).size();
+        long unclaimed = services.claims().countUnclaimed(player.getUniqueId());
         stats.editMeta(meta -> {
             meta.displayName(MM.deserialize(services.messages().get("gui.main.stats-title")));
             meta.lore(List.of(
@@ -84,9 +83,9 @@ public class AhMainGui {
                 .countPendingByListings(pageRows.stream().map(Listing::id).toList());
         for (Listing listing : pageRows) {
             if (slot > 44) break;
-            List<ItemStack> items = ItemBundleCodec.decode(listing.itemData());
-            if (items.isEmpty()) { slot++; continue; }
-            ItemStack icon = IconUtil.clean(items.get(0));
+            ItemCache.CachedIcon cached = ItemCache.icon("l" + listing.id(), listing.itemData());
+            if (cached == null) { slot++; continue; }
+            ItemStack icon = cached.cloneItem();
             long offers = pendingOffers.getOrDefault(listing.id(), 0L);
             String price = services.isEconomyEnabled() && listing.price() != null
                     ? String.valueOf(listing.price()) : "—";

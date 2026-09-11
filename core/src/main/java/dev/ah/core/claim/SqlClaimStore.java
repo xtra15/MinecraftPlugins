@@ -71,11 +71,45 @@ public class SqlClaimStore implements ClaimStore {
     }
 
     @Override
+    public List<ClaimRow> unclaimedPage(UUID owner, int limit, int offset) {
+        return db.transact(c -> {
+            try (PreparedStatement ps = c.prepareStatement("""
+                    SELECT * FROM claims WHERE owner_uuid = ? AND claimed_at IS NULL
+                    ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?""")) {
+                ps.setString(1, owner.toString());
+                ps.setInt(2, limit);
+                ps.setInt(3, offset);
+                try (ResultSet rs = ps.executeQuery()) {
+                    List<ClaimRow> out = new ArrayList<>();
+                    while (rs.next()) out.add(map(rs));
+                    return out;
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Override
     public long countUnclaimed(UUID owner) {
         return db.transact(c -> {
             try (PreparedStatement ps = c.prepareStatement(
                     "SELECT COUNT(*) FROM claims WHERE owner_uuid = ? AND claimed_at IS NULL")) {
                 ps.setString(1, owner.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    return rs.getLong(1);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Override
+    public long countUnclaimedTotal() {
+        return db.transact(c -> {
+            try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM claims WHERE claimed_at IS NULL")) {
                 try (ResultSet rs = ps.executeQuery()) {
                     rs.next();
                     return rs.getLong(1);

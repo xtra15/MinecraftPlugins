@@ -33,12 +33,20 @@ claims:
   no-space: "<red>Your inventory is full. Some items stayed in claims."
 admin:
   no-permission: "<red>You do not have permission."
-  title: "<gold>Admin <gray>· users"
+  title: "<gold>Admin <gray>· sellers page <page>/<pages>"
+  empty: "<gray>No active sellers."
+  stats-title: "<gold>Server overview"
+  stats-listings: "<gray>Active listings: <white><count>"
+  stats-offers: "<gray>Pending offers: <white><count>"
+  stats-sales: "<gray>Sales completed: <white><count>"
+  stats-claims: "<gray>Unclaimed items: <white><count>"
+  head-lore: "<gray>Listings: <white><listings> · offers: <white><offers>"
   user:
     title: "<gold>Listings <gray>· page <page>/<pages>"
     listing: "<gray>#<id> · <status> · <offers> offer(s)"
   sales:
-    title: "<gold>Sales log"
+    title: "<gold>Sales log <gray>· page <page>/<pages>"
+    empty: "<gray>No sales yet."
     row: "<gray><seller> → <buyer> · <outcome>"
     button: "<yellow>Sales log"
 gui:

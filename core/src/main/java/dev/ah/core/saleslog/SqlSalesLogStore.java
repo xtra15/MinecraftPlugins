@@ -55,14 +55,30 @@ public class SqlSalesLogStore implements SalesLogStore {
     }
 
     @Override
-    public List<SalesLogRow> recent(int limit) {
+    public List<SalesLogRow> recent(int limit, int offset) {
         return db.transact(c -> {
-            try (PreparedStatement ps = c.prepareStatement("SELECT * FROM sales_log ORDER BY accepted_at DESC, id DESC LIMIT ?")) {
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT * FROM sales_log ORDER BY accepted_at DESC, id DESC LIMIT ? OFFSET ?")) {
                 ps.setInt(1, limit);
+                ps.setInt(2, offset);
                 try (ResultSet rs = ps.executeQuery()) {
                     List<SalesLogRow> out = new ArrayList<>();
                     while (rs.next()) out.add(map(rs));
                     return out;
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Override
+    public long count() {
+        return db.transact(c -> {
+            try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM sales_log")) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    return rs.getLong(1);
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);

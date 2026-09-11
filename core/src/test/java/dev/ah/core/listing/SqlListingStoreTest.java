@@ -3,6 +3,7 @@ package dev.ah.core.listing;
 import dev.ah.core.db.SqliteDatabase;
 import org.junit.jupiter.api.Test;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.*;
@@ -107,9 +108,44 @@ class SqlListingStoreTest {
         s.create(new Listing(0, alice, "1", null, 0, 1, 100, "ACTIVE"));
         s.create(new Listing(0, alice, "2", null, 0, 2, 100, "ACTIVE"));
         s.create(new Listing(0, bob, "3", null, 0, 3, 100, "SOLD"));
-        List<UUID> owners = s.activeOwners(10);
+        List<UUID> owners = s.activeOwners(10, 0);
         assertEquals(1, owners.size());
         assertEquals(alice, owners.get(0));
+        db.close();
+    }
+
+    @Test
+    void activeOwnersPagedAndCounted() {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        SqlListingStore s = store(db);
+        UUID alice = UUID.randomUUID();
+        UUID bob = UUID.randomUUID();
+        s.create(new Listing(0, alice, "1", null, 0, 1, 100, "ACTIVE"));
+        s.create(new Listing(0, alice, "2", null, 0, 2, 100, "ACTIVE"));
+        s.create(new Listing(0, bob, "3", null, 0, 3, 100, "ACTIVE"));
+        s.create(new Listing(0, UUID.randomUUID(), "4", null, 0, 3, 100, "SOLD"));
+        assertEquals(2, s.countActiveOwners());
+        assertEquals(bob, s.activeOwners(1, 0).get(0));
+        assertEquals(alice, s.activeOwners(1, 1).get(0));
+        db.close();
+    }
+
+    @Test
+    void countActiveGroupedByOwnerBatchesAcrossIds() {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        SqlListingStore s = store(db);
+        UUID alice = UUID.randomUUID();
+        UUID bob = UUID.randomUUID();
+        UUID carol = UUID.randomUUID();
+        s.create(new Listing(0, alice, "1", null, 0, 1, 100, "ACTIVE"));
+        s.create(new Listing(0, alice, "2", null, 0, 2, 100, "ACTIVE"));
+        s.create(new Listing(0, bob, "3", null, 0, 3, 100, "ACTIVE"));
+        s.create(new Listing(0, carol, "4", null, 0, 4, 100, "SOLD"));
+        var counts = s.countActiveGroupedByOwner(List.of(alice, bob, carol));
+        assertEquals(2, counts.get(alice));
+        assertEquals(1, counts.get(bob));
+        assertNull(counts.get(carol));
+        assertTrue(s.countActiveGroupedByOwner(List.of()).isEmpty());
         db.close();
     }
 

@@ -31,4 +31,23 @@ class SqlSalesLogStoreTest {
         assertEquals(3, byBuyer.size());
         db.close();
     }
+
+    @Test
+    void recentPagedAndCounted() {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        db.init();
+        SqlSalesLogStore s = new SqlSalesLogStore(db);
+        UUID seller = UUID.randomUUID();
+        s.add(new SalesLogRow(0, 1, seller, UUID.randomUUID(), "SWORD", "ACCEPTED", 100L));
+        s.add(new SalesLogRow(0, 2, seller, UUID.randomUUID(), "PICK", "ACCEPTED", 200L));
+        s.add(new SalesLogRow(0, 3, seller, UUID.randomUUID(), "AXE", "ACCEPTED", 300L));
+        s.add(new SalesLogRow(0, 4, seller, UUID.randomUUID(), "BOOTS", "ACCEPTED", 400L));
+
+        assertEquals(4, s.count());
+        assertEquals("BOOTS", s.recent(2, 0).get(0).itemData());
+        assertEquals("AXE", s.recent(2, 0).get(1).itemData());
+        assertEquals("PICK", s.recent(2, 2).get(0).itemData());
+        assertEquals("SWORD", s.recent(2, 2).get(1).itemData());
+        db.close();
+    }
 }

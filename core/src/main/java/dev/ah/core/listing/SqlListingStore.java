@@ -5,8 +5,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -185,18 +188,63 @@ public class SqlListingStore implements ListingStore {
     }
 
     @Override
-    public List<UUID> activeOwners(int limit) {
+    public Map<UUID, Long> countActiveGroupedByOwner(Collection<UUID> owners) {
+        if (owners == null || owners.isEmpty()) return Map.of();
+        StringBuilder sql = new StringBuilder(
+                "SELECT owner_uuid, COUNT(*) FROM listings WHERE status = 'ACTIVE' AND owner_uuid IN (");
+        boolean first = true;
+        for (UUID ignored : owners) {
+            if (!first) sql.append(",");
+            sql.append("?");
+            first = false;
+        }
+        sql.append(") GROUP BY owner_uuid");
+        return db.transact(c -> {
+            Map<UUID, Long> out = new HashMap<>();
+            try (PreparedStatement ps = c.prepareStatement(sql.toString())) {
+                int i = 1;
+                for (UUID uuid : owners) ps.setString(i++, uuid.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) out.put(UUID.fromString(rs.getString(1)), rs.getLong(2));
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            return out;
+        });
+    }
+
+    @Override
+    public List<UUID> activeOwners(int limit, int offset) {
         return db.transact(c -> {
             try (PreparedStatement ps = c.prepareStatement("""
                     SELECT owner_uuid FROM (
                       SELECT owner_uuid, MAX(created_at) AS latest FROM listings
                       WHERE status = 'ACTIVE' GROUP BY owner_uuid
-                    ) ORDER BY latest DESC LIMIT ?""")) {
+                    ) ORDER BY latest DESC LIMIT ? OFFSET ?""")) {
                 ps.setInt(1, limit);
+                ps.setInt(2, offset);
                 try (ResultSet rs = ps.executeQuery()) {
                     List<UUID> out = new ArrayList<>();
                     while (rs.next()) out.add(UUID.fromString(rs.getString(1)));
                     return out;
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Override
+    public long countActiveOwners() {
+        return db.transact(c -> {
+            try (PreparedStatement ps = c.prepareStatement("""
+                    SELECT COUNT(*) FROM (
+                      SELECT owner_uuid FROM listings WHERE status = 'ACTIVE' GROUP BY owner_uuid
+                    )""")) {
+                try (ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    return rs.getLong(1);
                 }
             } catch (SQLException e) {
                 throw new RuntimeException(e);

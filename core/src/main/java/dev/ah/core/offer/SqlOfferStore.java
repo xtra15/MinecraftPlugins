@@ -6,6 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -134,6 +135,49 @@ public class SqlOfferStore implements OfferStore {
                     WHERE status = 'PENDING'
                       AND listing_id IN (SELECT id FROM listings WHERE owner_uuid = ?)""")) {
                 ps.setString(1, sellerUuid.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    return rs.getLong(1);
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    @Override
+    public Map<UUID, Long> countPendingGroupedBySellers(Collection<UUID> sellers) {
+        if (sellers == null || sellers.isEmpty()) return Map.of();
+        StringBuilder sql = new StringBuilder("""
+                SELECT l.owner_uuid, COUNT(*) FROM offers o
+                JOIN listings l ON o.listing_id = l.id
+                WHERE o.status = 'PENDING' AND l.owner_uuid IN (""");
+        boolean first = true;
+        for (UUID ignored : sellers) {
+            if (!first) sql.append(",");
+            sql.append("?");
+            first = false;
+        }
+        sql.append(") GROUP BY l.owner_uuid");
+        return db.transact(c -> {
+            Map<UUID, Long> out = new HashMap<>();
+            try (PreparedStatement ps = c.prepareStatement(sql.toString())) {
+                int i = 1;
+                for (UUID uuid : sellers) ps.setString(i++, uuid.toString());
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) out.put(UUID.fromString(rs.getString(1)), rs.getLong(2));
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            return out;
+        });
+    }
+
+    @Override
+    public long countPending() {
+        return db.transact(c -> {
+            try (PreparedStatement ps = c.prepareStatement("SELECT COUNT(*) FROM offers WHERE status = 'PENDING'")) {
                 try (ResultSet rs = ps.executeQuery()) {
                     rs.next();
                     return rs.getLong(1);

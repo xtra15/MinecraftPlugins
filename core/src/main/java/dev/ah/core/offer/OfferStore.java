@@ -14,5 +14,7 @@ public interface OfferStore {
     Map<Long, Long> countPendingByListings(Collection<Long> listingIds);
     long countPendingByOfferer(UUID offererUuid);
     long countPendingForSeller(UUID sellerUuid);
+    Map<UUID, Long> countPendingGroupedBySellers(Collection<UUID> sellers);
+    long countPending();
     void updateStatusIfPending(long id, String newStatus, long decidedAt);
 }

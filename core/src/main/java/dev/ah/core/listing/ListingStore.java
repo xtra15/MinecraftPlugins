@@ -1,6 +1,8 @@
 package dev.ah.core.listing;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,5 +17,7 @@ public interface ListingStore {
     long countActive(String search);
     long countActiveBy(UUID owner);
     long countBy(UUID owner);
-    List<UUID> activeOwners(int limit);
+    Map<UUID, Long> countActiveGroupedByOwner(Collection<UUID> owners);
+    List<UUID> activeOwners(int limit, int offset);
+    long countActiveOwners();
 }

@@ -87,6 +87,7 @@ public class AhServices {
     }
 
     public void close() { db.close(); }
+    public SqliteDatabase db() { return db; }
     public ListingStore listings() { return listings; }
     public OfferStore offers() { return offers; }
     public ClaimStore claims() { return claims; }
