@@ -1,6 +1,7 @@
 package dev.ah.auctionhouse.gui;
 
 import dev.ah.auctionhouse.AhServices;
+import dev.ah.auctionhouse.listener.ChatSearchListener;
 import dev.ah.core.gui.ChestGui;
 import dev.ah.core.listing.Listing;
 import dev.ah.core.misc.ItemBundleCodec;
@@ -84,7 +85,7 @@ public class AhMainGui {
                 "gui.buttons.sort", "gui.buttons.sort-lore", Map.of()));
         gui.on(47, clk -> {
             clk.player().closeInventory();
-            clk.player().performCommand("ah search ");
+            ChatSearchListener.prompt(clk.player(), services.messages().get("gui.buttons.search-prompt"));
         }).set(47, GuiItems.button(services, Material.OAK_SIGN,
                 "gui.buttons.search", "gui.buttons.search-lore", Map.of()));
         gui.on(50, () -> new ClaimGui(services).open(player, 0)).set(50, GuiItems.button(services, Material.CHEST,

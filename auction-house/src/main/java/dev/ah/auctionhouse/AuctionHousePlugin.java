@@ -1,6 +1,7 @@
 package dev.ah.auctionhouse;
 
 import dev.ah.auctionhouse.command.AhCommand;
+import dev.ah.auctionhouse.listener.ChatSearchListener;
 import dev.ah.auctionhouse.listener.JoinNotifier;
 import dev.ah.auctionhouse.listener.MenuListener;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -18,6 +19,7 @@ public class AuctionHousePlugin extends JavaPlugin {
         getCommand("ah").setTabCompleter(command);
         getServer().getPluginManager().registerEvents(new MenuListener(services.gui()), this);
         getServer().getPluginManager().registerEvents(new JoinNotifier(this), this);
+        getServer().getPluginManager().registerEvents(new ChatSearchListener(this), this);
         startSweep();
         getLogger().info("AuctionHouse enabled. Economy=" + (services.isEconomyEnabled() ? "ON" : "OFF (item trading)"));
     }
