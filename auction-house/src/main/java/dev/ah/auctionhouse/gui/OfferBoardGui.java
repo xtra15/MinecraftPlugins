@@ -58,10 +58,14 @@ public class OfferBoardGui {
         String name = Bukkit.getOfflinePlayer(offer.offerer()).getName();
         String display = name == null ? offer.offerer().toString().substring(0, 8) : name;
         ItemStack by = new ItemStack(Material.NAME_TAG, 1);
-        by.editMeta(meta -> meta.displayName(MM.deserialize(services.messages().get("offer-board.by",
-                Map.of("name", display,
-                        "index", String.valueOf(offerIndex + 1),
-                        "total", String.valueOf(pending.size()))))));
+        by.editMeta(meta -> {
+            meta.displayName(MM.deserialize(services.messages().get("offer-board.by",
+                    Map.of("name", display,
+                            "index", String.valueOf(offerIndex + 1),
+                            "total", String.valueOf(pending.size())))));
+            meta.lore(List.of(MM.deserialize(services.messages().get("offer-board.by-lore",
+                    Map.of("count", String.valueOf(offered.size()))))));
+        });
         gui.set(4, by);
 
         for (int i = 0; i < Math.min(offered.size(), 12); i++) {
@@ -72,7 +76,7 @@ public class OfferBoardGui {
         if (manage) {
             long offerId = offer.id();
             gui.on(48, () -> openItems(offer)).set(48, GuiItems.button(services, Material.DIAMOND, "offer-board.inspect"));
-            gui.on(50, () -> decide(offerId, true)).set(50, GuiItems.button(services, Material.LIME_DYE, "offer-board.accept"));
+            gui.on(50, () -> confirmAccept(offer)).set(50, GuiItems.button(services, Material.LIME_DYE, "offer-board.accept"));
             gui.on(52, () -> decide(offerId, false)).set(52, GuiItems.button(services, Material.RED_DYE, "offer-board.reject"));
         }
         if (pending.size() > 1) {
@@ -83,6 +87,15 @@ public class OfferBoardGui {
         }
         services.sounds().play(viewer, SoundRegistry.Event.OPEN);
         gui.open(viewer);
+    }
+
+    private void confirmAccept(Offer offer) {
+        ChestGui confirm = new ChestGui(3, services.messages().get("offer-board.confirm-title"));
+        confirm.fillRect(18, 26, new ItemStack(services.guiFillerMaterial(), 1));
+        confirm.on(0, this::open).set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
+        confirm.on(11, () -> decide(offer.id(), true)).set(11, GuiItems.button(services, Material.LIME_DYE, "gui.buttons.confirm"));
+        confirm.on(15, this::open).set(15, GuiItems.button(services, Material.BARRIER, "gui.buttons.cancel"));
+        confirm.open(viewer);
     }
 
     private void decide(long offerId, boolean accept) {
@@ -96,6 +109,8 @@ public class OfferBoardGui {
             services.sounds().play(viewer, SoundRegistry.Event.OFFER_ACCEPTED);
             new dev.ah.auctionhouse.notify.NotificationService(services).notifyOfferDecision(offer.offerer(), accept);
         } else {
+            String key = r == OfferDecisionService.Result.NOT_PENDING ? "offer-board.expired" : "errors.unknown";
+            viewer.sendMessage(MM.deserialize(services.messages().get(key)));
             services.sounds().play(viewer, SoundRegistry.Event.ERROR);
         }
         open();

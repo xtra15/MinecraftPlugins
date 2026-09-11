@@ -15,7 +15,7 @@ listings:
   lore:
     price: "<gray>BIN: <white><price>"
     offers: "<gray>Offers: <white><count>"
-    remaining: "<gray>Expires in: <white><minutes>m"
+    remaining: "<gray>Expires in: <white><time>"
 offers:
   made: "<green>Offer sent."
   received: "<yellow>You have a new offer on one of your listings."
@@ -44,6 +44,8 @@ admin:
 gui:
   main:
     title: "<gold>Auctions"
+    search-title: "<gold>Auctions <gray>· searching <white><term>"
+    empty: "<gray>Nothing for sale yet — sell something!"
     stats-title: "<gold>Auction House"
     stats-listings: "<gray>Your active listings: <white><count>"
     stats-offers: "<gray>Your pending offers: <white><count>"
@@ -56,10 +58,13 @@ gui:
     prev-lore: "<gray>Click to go back"
     search: "<yellow>Search"
     search-lore: "<gray>Filter listings by item name"
+    clear-search: "<red>Clear search"
     sort: "<yellow>Sort listings"
-    sort-lore: "<gray>Click to toggle newest / oldest"
+    sort-state: "<gray>Showing: <white><state>"
     claim: "<yellow>Claim items"
     claim-lore: "<gray>Collect sold, expired and returned items"
+    claim-all: "<green>Collect all"
+    claim-all-lore: "<gray>Grab every unclaimed item at once"
     confirm: "<green>Confirm"
     cancel: "<red>Cancel"
     close: "<red>Close"
@@ -72,6 +77,9 @@ offer-board:
   items-viewer: "<gold>Offered items"
   empty: "<gray>No pending offers."
   by: "<yellow>Offer <index>/<total> from <white><name>"
+  by-lore: "<gray><count> item(s) offered"
+  confirm-title: "<gold>Accept this offer?"
+  expired: "<red>This offer is no longer available."
   accept: "<green>Accept this offer"
   reject: "<red>Reject this offer"
   inspect: "<yellow>View offered items"

@@ -22,6 +22,19 @@ final class IconUtil {
         return icon;
     }
 
+    static String humanize(long millis) {
+        long totalMinutes = millis / 60000;
+        if (totalMinutes <= 0) return "under a minute";
+        long days = totalMinutes / 1440;
+        long hours = (totalMinutes % 1440) / 60;
+        long mins = totalMinutes % 60;
+        StringBuilder sb = new StringBuilder();
+        if (days > 0) sb.append(days).append("d ");
+        if (hours > 0) sb.append(hours).append("h ");
+        if (mins > 0) sb.append(mins).append("m");
+        return sb.toString().trim();
+    }
+
     static String pretty(Material material) {
         String[] words = material.name().toLowerCase(Locale.ROOT).split("_");
         StringBuilder sb = new StringBuilder();

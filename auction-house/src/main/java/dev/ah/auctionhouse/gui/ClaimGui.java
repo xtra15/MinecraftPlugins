@@ -10,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -71,8 +72,42 @@ public class ClaimGui {
         gui.on(45, () -> open(player, pageIndex - 1)).set(45, GuiItems.button(services, Material.ARROW,
                 "gui.buttons.prev", "gui.buttons.prev-lore", Map.of()));
         gui.on(49, () -> player.closeInventory()).set(49, GuiItems.button(services, Material.BARRIER, "gui.buttons.close"));
+        gui.on(50, () -> collectAll(player)).set(50, GuiItems.button(services, Material.HOPPER,
+                "gui.buttons.claim-all", "gui.buttons.claim-all-lore", Map.of()));
         services.sounds().play(player, SoundRegistry.Event.OPEN);
         gui.open(player);
+    }
+
+    private void collectAll(Player player) {
+        List<ClaimRow> rows = services.claims().unclaimedFor(player.getUniqueId());
+        List<ItemStack> all = new ArrayList<>();
+        for (ClaimRow row : rows) {
+            all.addAll(ItemBundleCodec.decode(row.itemsData()));
+        }
+        if (all.isEmpty()) {
+            player.sendMessage(MM.deserialize(services.messages().get("claims.empty")));
+            services.sounds().play(player, SoundRegistry.Event.ERROR);
+            return;
+        }
+        int freeSlots = 0;
+        for (ItemStack s : player.getInventory().getStorageContents()) {
+            if (s == null || s.getType().isAir()) freeSlots++;
+        }
+        if (freeSlots < all.size()) {
+            player.sendMessage(MM.deserialize(services.messages().get("claims.no-space")));
+            services.sounds().play(player, SoundRegistry.Event.ERROR);
+            return;
+        }
+        for (ItemStack item : all) {
+            player.getInventory().addItem(item);
+        }
+        long now = System.currentTimeMillis();
+        for (ClaimRow row : rows) {
+            services.claims().markClaimed(row.id(), now);
+        }
+        player.sendMessage(MM.deserialize(services.messages().get("claims.withdrawn")));
+        services.sounds().play(player, SoundRegistry.Event.CLICK);
+        open(player, 0);
     }
 
     private void withdraw(Player player, long rowId) {
