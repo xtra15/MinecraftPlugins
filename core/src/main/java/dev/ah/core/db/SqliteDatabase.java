@@ -131,6 +131,22 @@ public final class SqliteDatabase implements AutoCloseable {
         });
     }
 
+    public void wipe() {
+        transact(c -> {
+            try (Statement st = c.createStatement()) {
+                st.executeUpdate("DELETE FROM notifications");
+                st.executeUpdate("DELETE FROM balances");
+                st.executeUpdate("DELETE FROM sales_log");
+                st.executeUpdate("DELETE FROM claims");
+                st.executeUpdate("DELETE FROM offers");
+                st.executeUpdate("DELETE FROM listings");
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        });
+    }
+
     @Override
     public synchronized void close() {
         if (closed) return;

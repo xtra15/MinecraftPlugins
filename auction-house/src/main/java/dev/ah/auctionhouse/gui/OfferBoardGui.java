@@ -37,7 +37,7 @@ public class OfferBoardGui {
         if (offerIndex >= pending.size()) offerIndex = Math.max(0, pending.size() - 1);
 
         ChestGui gui = new ChestGui(6, services.messages().get("offer-board.title"));
-        gui.fill(services.fillerItem());
+        gui.fillRect(45, 53, services.fillerItem());
         gui.on(0, this::back).set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
 
         List<ItemStack> auctioned = ItemBundleCodec.decode(listing.itemData());
@@ -91,7 +91,7 @@ public class OfferBoardGui {
 
     private void confirmAccept(Offer offer) {
         ChestGui confirm = new ChestGui(3, services.messages().get("offer-board.confirm-title"));
-        confirm.fill(services.fillerItem());
+        confirm.fillRect(18, 26, services.fillerItem());
         confirm.on(0, this::open).set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
         confirm.on(11, () -> decide(offer.id(), true)).set(11, GuiItems.button(services, Material.LIME_DYE, "gui.buttons.confirm"));
         confirm.on(15, this::open).set(15, GuiItems.button(services, Material.BARRIER, "gui.buttons.cancel"));

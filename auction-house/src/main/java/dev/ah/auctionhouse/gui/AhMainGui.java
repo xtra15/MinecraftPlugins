@@ -63,7 +63,7 @@ public class AhMainGui {
         List<Listing> pageRows = services.listings().activePage(pageSize, pageIndex * pageSize, needle, oldest);
 
         ChestGui gui = new ChestGui(6, title);
-        gui.fill(services.fillerItem());
+        gui.fillRect(45, 53, services.fillerItem());
 
         ItemStack stats = new ItemStack(Material.BOOK, 1);
         long myListings = services.listings().countActiveBy(player.getUniqueId());

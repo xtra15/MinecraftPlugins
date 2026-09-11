@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class AhCommand implements CommandExecutor, TabCompleter {
     private static final MiniMessage MM = MiniMessage.miniMessage();
-    private static final List<String> SUBCOMMANDS = List.of("sell", "search", "my", "claim", "admin", "reload", "help");
+    private static final List<String> SUBCOMMANDS = List.of("sell", "search", "my", "claim", "admin", "reload", "reset", "help");
     private final AuctionHousePlugin plugin;
 
     public AhCommand(AuctionHousePlugin plugin) {
@@ -64,6 +64,12 @@ public class AhCommand implements CommandExecutor, TabCompleter {
                 if (require(player, "ah.admin")) {
                     plugin.reloadServices();
                     player.sendMessage(MM.deserialize(services().messages().get("commands.reloaded")));
+                }
+            }
+            case "reset" -> {
+                if (require(player, "ah.admin")) {
+                    services().db().wipe();
+                    player.sendMessage(MM.deserialize(services().messages().get("commands.reset")));
                 }
             }
             default -> player.sendMessage(MM.deserialize(services().messages().get("commands.help")));
