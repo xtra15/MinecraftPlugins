@@ -6,6 +6,7 @@ checks:
   cannot-offer-self: "<red>You cannot offer on your own listing."
   max-listings: "<red>You have reached the listing limit."
   max-offer-items: "<red>Too many items in this offer."
+  max-offers: "<red>You have reached the offer limit."
   invalid-items: "<red>You must deposit at least one item."
   listing-expired: "<red>This listing has expired."
 listings:

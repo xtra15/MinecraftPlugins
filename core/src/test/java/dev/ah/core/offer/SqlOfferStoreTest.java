@@ -64,4 +64,39 @@ class SqlOfferStoreTest {
         assertFalse(o.byId(offerId).get().isPending());
         db.close();
     }
+
+    @Test
+    void countPendingByListingsBatchesAcrossIds() {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        db.init();
+        SqlOfferStore o = new SqlOfferStore(db);
+        UUID why = UUID.randomUUID();
+        o.create(new Offer(0, 10, why, "a", "PENDING", 1, null));
+        o.create(new Offer(0, 10, why, "b", "PENDING", 2, null));
+        o.create(new Offer(0, 11, why, "c", "PENDING", 3, null));
+        o.create(new Offer(0, 12, why, "d", "ACCEPTED", 4, null));
+
+        var counts = o.countPendingByListings(List.of(10L, 11L, 12L));
+        assertEquals(2, counts.get(10L));
+        assertEquals(1, counts.get(11L));
+        assertNull(counts.get(12L));
+        assertTrue(o.countPendingByListings(List.of()).isEmpty());
+        db.close();
+    }
+
+    @Test
+    void countPendingByOffererCountsOnlyPending() {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        db.init();
+        SqlOfferStore o = new SqlOfferStore(db);
+        UUID bidder = UUID.randomUUID();
+        long p1 = o.create(new Offer(0, 1, bidder, "a", "PENDING", 1, null));
+        o.create(new Offer(0, 2, bidder, "b", "PENDING", 2, null));
+        o.create(new Offer(0, 3, UUID.randomUUID(), "c", "PENDING", 3, null));
+        assertEquals(2, o.countPendingByOfferer(bidder));
+
+        o.updateStatusIfPending(p1, "REJECTED", 9L);
+        assertEquals(1, o.countPendingByOfferer(bidder));
+        db.close();
+    }
 }

@@ -35,7 +35,7 @@ public class ClaimGui {
 
         ChestGui gui = new ChestGui(6, services.messages().get("claims.title",
                 Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(totalPages))));
-        gui.fill(new ItemStack(Material.valueOf(services.getGuiFiller()), 1));
+        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
         gui.fillRect(9, 44, null);
 
         int slot = 9;
@@ -72,20 +72,22 @@ public class ClaimGui {
         var row = services.claims().byId(rowId).orElse(null);
         if (row == null) return;
         List<ItemStack> items = ItemBundleCodec.decode(row.itemsData());
-        boolean allFit = true;
-        for (ItemStack item : items) {
-            var leftover = player.getInventory().addItem(item);
-            if (!leftover.isEmpty()) allFit = false;
+        int freeSlots = 0;
+        for (ItemStack s : player.getInventory().getStorageContents()) {
+            if (s == null || s.getType().isAir()) freeSlots++;
         }
-        if (allFit) {
-            services.claims().markClaimed(rowId, System.currentTimeMillis());
-            player.sendMessage(MM.deserialize(services.messages().get("claims.withdrawn")));
-            services.sounds().play(player, SoundRegistry.Event.CLICK);
-            open(player, 0);
-        } else {
+        if (freeSlots < items.size()) {
             player.sendMessage(MM.deserialize(services.messages().get("claims.no-space")));
             services.sounds().play(player, SoundRegistry.Event.ERROR);
+            return;
         }
+        for (ItemStack item : items) {
+            player.getInventory().addItem(item);
+        }
+        services.claims().markClaimed(rowId, System.currentTimeMillis());
+        player.sendMessage(MM.deserialize(services.messages().get("claims.withdrawn")));
+        services.sounds().play(player, SoundRegistry.Event.CLICK);
+        open(player, 0);
     }
 
     private ItemStack arrow(String label) {

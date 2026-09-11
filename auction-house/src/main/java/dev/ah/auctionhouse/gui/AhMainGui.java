@@ -49,17 +49,19 @@ public class AhMainGui {
         List<Listing> pageRows = services.listings().activePage(pageSize, pageIndex * pageSize, needle, oldest);
 
         ChestGui gui = new ChestGui(6, services.messages().get("gui.main.title"));
-        gui.fill(new ItemStack(Material.valueOf(services.getGuiFiller()), 1));
+        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
         gui.fillRect(9, 44, null);
 
         int slot = 9;
+        java.util.Map<Long, Long> pendingOffers = services.offers()
+                .countPendingByListings(pageRows.stream().map(Listing::id).toList());
         for (Listing listing : pageRows) {
             if (slot > 44) break;
             List<ItemStack> items = ItemBundleCodec.decode(listing.itemData());
             if (items.isEmpty()) { slot++; continue; }
             ItemStack icon = items.get(0).clone();
             ItemMeta meta = icon.getItemMeta();
-            long offers = services.offers().countPendingByListing(listing.id());
+            long offers = pendingOffers.getOrDefault(listing.id(), 0L);
             String price = services.isEconomyEnabled() && listing.price() != null
                     ? String.valueOf(listing.price()) : "—";
             meta.lore(List.of(

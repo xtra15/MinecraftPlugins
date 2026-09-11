@@ -26,7 +26,7 @@ public class AdminGui {
 
     public void open(Player admin) {
         ChestGui gui = new ChestGui(6, services.messages().get("admin.title"));
-        gui.fill(new ItemStack(Material.valueOf(services.getGuiFiller()), 1));
+        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
         gui.fillRect(9, 44, null);
 
         List<UUID> players = services.listings().activeOwners(1000);
@@ -48,15 +48,18 @@ public class AdminGui {
 
     void openUser(Player admin, UUID uuid) {
         ChestGui gui = new ChestGui(6, services.messages().get("admin.user.title"));
-        gui.fill(new ItemStack(Material.valueOf(services.getGuiFiller()), 1));
+        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
         gui.fillRect(9, 44, null);
+        List<Listing> ownerListings = services.listings().byOwner(uuid, 100, 0);
+        java.util.Map<Long, Long> pendingOffers = services.offers()
+                .countPendingByListings(ownerListings.stream().map(Listing::id).toList());
         int slot = 9;
-        for (Listing l : services.listings().byOwner(uuid, 10_000, 0)) {
+        for (Listing l : ownerListings) {
             if (slot > 44) break;
             List<ItemStack> items = ItemBundleCodec.decode(l.itemData());
             if (items.isEmpty()) { slot++; continue; }
             ItemStack icon = items.get(0).clone();
-            long offers = services.offers().countPendingByListing(l.id());
+            long offers = pendingOffers.getOrDefault(l.id(), 0L);
             icon.editMeta(m -> m.lore(List.of(MM.deserialize(services.messages().get("admin.user.listing", Map.of(
                     "id", String.valueOf(l.id()),
                     "status", l.status(),
@@ -76,7 +79,7 @@ public class AdminGui {
 
     private void openSalesLog(Player admin) {
         ChestGui gui = new ChestGui(6, services.messages().get("admin.sales.title"));
-        gui.fill(new ItemStack(Material.valueOf(services.getGuiFiller()), 1));
+        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
         gui.fillRect(9, 44, null);
         int slot = 9;
         for (SalesLogRow row : services.sales().recent(36)) {

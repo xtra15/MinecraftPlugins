@@ -29,7 +29,7 @@ public class OfferBoardGui {
         Listing listing = services.listings().byId(listingId).orElse(null);
         if (listing == null) return;
         ChestGui gui = new ChestGui(6, services.messages().get("offer-board.title"));
-        gui.fill(new ItemStack(Material.valueOf(services.getGuiFiller()), 1));
+        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
 
         List<ItemStack> auctioned = ItemBundleCodec.decode(listing.itemData());
         for (int i = 0; i < Math.min(auctioned.size(), 5); i++) {
@@ -74,7 +74,7 @@ public class OfferBoardGui {
 
     private void openItems(Offer offer) {
         ChestGui viewerGui = new ChestGui(6, services.messages().get("offer-board.items-viewer"));
-        viewerGui.fill(new ItemStack(Material.valueOf(services.getGuiFiller()), 1));
+        viewerGui.fill(new ItemStack(services.guiFillerMaterial(), 1));
         List<ItemStack> items = ItemBundleCodec.decode(offer.itemsData());
         for (int i = 0; i < Math.min(items.size(), 45); i++) {
             viewerGui.set(i, items.get(i).clone());

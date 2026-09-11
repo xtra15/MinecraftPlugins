@@ -20,7 +20,7 @@ public class ChestGui {
     private final int rows;
     private final Map<Integer, Slot> slots = new LinkedHashMap<>();
     private Inventory inventory;
-    private final Component title;
+    private Component title;
 
     public ChestGui(int rows, String title) {
         this.rows = rows;
@@ -28,6 +28,7 @@ public class ChestGui {
     }
 
     public ChestGui title(String title) {
+        this.title = Component.text(title);
         return this;
     }
 

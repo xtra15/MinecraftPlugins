@@ -16,7 +16,7 @@ public class AhActions {
     }
 
     public enum CreateResult { SUCCESS, LIMIT_REACHED, NO_ITEMS, INVALID }
-    public enum OfferResult { SUCCESS, NOT_ACTIVE, SELF_OFFER, TOO_MANY_ITEMS, NO_ITEMS }
+    public enum OfferResult { SUCCESS, NOT_ACTIVE, SELF_OFFER, TOO_MANY_ITEMS, NO_ITEMS, TOO_MANY_OFFERS }
 
     public CreateResult createListing(Player seller, List<ItemStack> items, long durationMs) {
         List<ItemStack> clean = items == null ? List.of() : items.stream()
@@ -57,6 +57,9 @@ public class AhActions {
         Optional<Listing> listing = services.listings().byId(listingId);
         if (listing.isEmpty() || !listing.get().isActive()) return OfferResult.NOT_ACTIVE;
         if (listing.get().owner().equals(buyer.getUniqueId())) return OfferResult.SELF_OFFER;
+        if (services.offers().countPendingByOfferer(buyer.getUniqueId()) >= services.maxOffersPerPlayer()) {
+            return OfferResult.TOO_MANY_OFFERS;
+        }
         long now = System.currentTimeMillis();
         services.offers().create(new Offer(0, listingId, buyer.getUniqueId(),
                 ItemBundleCodec.encode(clean), "PENDING", now, null));

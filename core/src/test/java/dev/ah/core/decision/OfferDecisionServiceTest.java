@@ -128,6 +128,40 @@ class OfferDecisionServiceTest {
     }
 
     @Test
+    void acceptOnNonActiveListingIsRejected() {
+        Fixture f = fixture();
+        UUID seller = UUID.randomUUID();
+        UUID buyer = UUID.randomUUID();
+        long listing = f.listings.create(new Listing(0, seller, "AUCTIONED", null, 0, 1, 100, "ACTIVE"));
+        long offer = f.offers.create(new Offer(0, listing, buyer, "PAYMENT", "PENDING", 2, null));
+        f.listings.updateStatus(listing, "EXPIRED");
+
+        assertEquals(OfferDecisionService.Result.NOT_PENDING, f.svc.accept(seller, offer));
+
+        assertEquals("EXPIRED", f.listings.byId(listing).get().status());
+        assertTrue(f.offers.byId(offer).get().isPending());
+        assertTrue(f.claims.unclaimedFor(seller).isEmpty());
+        assertTrue(f.claims.unclaimedFor(buyer).isEmpty());
+        f.db.close();
+    }
+
+    @Test
+    void rejectStillAllowedOnExpiredListingToReturnOfferItems() {
+        Fixture f = fixture();
+        UUID seller = UUID.randomUUID();
+        UUID buyer = UUID.randomUUID();
+        long listing = f.listings.create(new Listing(0, seller, "AUCTIONED", null, 0, 1, 100, "ACTIVE"));
+        long offer = f.offers.create(new Offer(0, listing, buyer, "PAYMENT", "PENDING", 2, null));
+        f.listings.updateStatus(listing, "EXPIRED");
+
+        assertEquals(OfferDecisionService.Result.SUCCESS, f.svc.reject(seller, offer));
+
+        assertEquals("REJECTED", f.offers.byId(offer).get().status());
+        assertEquals("PAYMENT", f.claims.unclaimedFor(buyer).get(0).itemsData());
+        f.db.close();
+    }
+
+    @Test
     void nestedTransactionsCommitTogether() {
         Fixture f = fixture();
         UUID bob = UUID.randomUUID();

@@ -30,7 +30,7 @@ public class OfferGui {
             return;
         }
         DepositGui gui = new DepositGui(4, services.messages().get("offer.title"), 9, 17);
-        gui.fill(new ItemStack(Material.valueOf(services.getGuiFiller()), 1));
+        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
         gui.fillRect(9, 17, null);
         List<ItemStack> preview = ItemBundleCodec.decode(listing.itemData());
         if (!preview.isEmpty()) gui.set(0, preview.get(0).clone());
@@ -54,6 +54,7 @@ public class OfferGui {
                 case NOT_ACTIVE -> "checks.listing-expired";
                 case SELF_OFFER -> "checks.cannot-offer-self";
                 case TOO_MANY_ITEMS -> "checks.max-offer-items";
+                case TOO_MANY_OFFERS -> "checks.max-offers";
                 case NO_ITEMS -> "checks.invalid-items";
                 default -> "errors.unknown";
             };

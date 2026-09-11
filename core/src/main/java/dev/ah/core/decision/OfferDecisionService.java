@@ -43,6 +43,7 @@ public class OfferDecisionService {
         Listing listing = maybeListing.get();
         if (!listing.owner().equals(actor)) return Result.NOT_OWNER;
         if (!offer.isPending()) return Result.NOT_PENDING;
+        if (accept && !listing.isActive()) return Result.NOT_PENDING;
 
         try {
             long now = System.currentTimeMillis();

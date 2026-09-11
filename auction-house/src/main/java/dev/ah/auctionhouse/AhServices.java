@@ -17,6 +17,7 @@ import dev.ah.core.offer.SqlOfferStore;
 import dev.ah.core.saleslog.SalesLogStore;
 import dev.ah.core.saleslog.SqlSalesLogStore;
 import dev.ah.core.sweep.ExpirySweep;
+import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -44,7 +45,7 @@ public class AhServices {
     private final int maxOffersPerPlayer;
     private final long sweepIntervalMs;
     private final int pageSize;
-    private final String guiFiller;
+    private final Material guiFillerMaterial;
 
     public AhServices(JavaPlugin plugin) {
         plugin.saveResource("config.yml", false);
@@ -61,7 +62,7 @@ public class AhServices {
         this.sales = new SqlSalesLogStore(db);
         this.notifications = new SqlNotificationStore(db);
         this.decisions = new OfferDecisionService(listings, offers, claims, sales);
-        this.sweep = new ExpirySweep(db, listings, claims);
+        this.sweep = new ExpirySweep(db, listings, offers, claims);
         this.messages = new MessageRepository(new File(plugin.getDataFolder(), "lang.yml"));
         this.sounds = new SoundRegistry(new File(plugin.getDataFolder(), "sounds.yml"));
         this.gui = new GuiManager();
@@ -75,7 +76,15 @@ public class AhServices {
         this.allowedDurationsMs = cfg.getLongList("durations-ms");
         this.sweepIntervalMs = cfg.getLong("sweep-interval-seconds", 60L) * 1000L;
         this.pageSize = cfg.getInt("page-size", 36);
-        this.guiFiller = cfg.getString("fill-item", "BLACK_STAINED_GLASS_PANE");
+        this.guiFillerMaterial = parseMaterial(cfg.getString("fill-item", "BLACK_STAINED_GLASS_PANE"));
+    }
+
+    private static Material parseMaterial(String name) {
+        try {
+            return Material.valueOf(name);
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return Material.BLACK_STAINED_GLASS_PANE;
+        }
     }
 
     public void close() { db.close(); }
@@ -98,5 +107,5 @@ public class AhServices {
     public int maxOffersPerPlayer() { return maxOffersPerPlayer; }
     public long sweepIntervalMs() { return sweepIntervalMs; }
     public int pageSize() { return pageSize; }
-    public String getGuiFiller() { return guiFiller; }
+    public Material guiFillerMaterial() { return guiFillerMaterial; }
 }
