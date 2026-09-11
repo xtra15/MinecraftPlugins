@@ -41,14 +41,33 @@ admin:
   sales:
     title: "<gold>Sales log"
     row: "<gray><seller> → <buyer> · <outcome>"
+    button: "<yellow>Sales log"
 gui:
   main:
     title: "<gold>Auctions"
+  buttons:
+    next: "<green>Next page"
+    next-lore: "<gray>Click to show more listings"
+    prev: "<green>Previous page"
+    prev-lore: "<gray>Click to go back"
+    search: "<yellow>Search"
+    search-lore: "<gray>Filter listings by item name"
+    sort: "<yellow>Sort listings"
+    sort-lore: "<gray>Click to toggle newest / oldest"
+    claim: "<yellow>Claim items"
+    claim-lore: "<gray>Collect sold, expired and returned items"
+    confirm: "<green>Confirm"
+    cancel: "<red>Cancel"
+    close: "<red>Close"
 offer-board:
   title: "<gold>Offers"
   items-viewer: "<gold>Offered items"
+  accept: "<green>Accept this offer"
+  reject: "<red>Reject this offer"
+  inspect: "<yellow>View offered items"
 sell:
   title: "<gold>List an item"
+  preview: "<gray>Listing preview"
 offer:
   title: "<gold>Make an offer"
 errors:

@@ -33,6 +33,7 @@ public class ChestGui {
     }
 
     public ChestGui set(int slot, ItemStack item) {
+        requireSlot(slot);
         Slot existing = slots.get(slot);
         slots.put(slot, new Slot(item, existing != null ? existing.action() : clk -> {}));
         return this;
@@ -43,6 +44,7 @@ public class ChestGui {
     }
 
     public ChestGui on(int slot, Consumer<Click> action) {
+        requireSlot(slot);
         Slot existing = slots.get(slot);
         slots.put(slot, new Slot(existing != null ? existing.item() : null, action));
         return this;
@@ -55,8 +57,16 @@ public class ChestGui {
     }
 
     public void fillRect(int fromSlot, int toSlot, ItemStack filler) {
+        requireSlot(fromSlot);
+        requireSlot(toSlot);
         for (int i = fromSlot; i <= toSlot; i++) {
             slots.putIfAbsent(i, new Slot(filler, clk -> {}));
+        }
+    }
+
+    private void requireSlot(int slot) {
+        if (slot < 0 || slot >= rows * 9) {
+            throw new IllegalArgumentException("slot " + slot + " out of range for a " + rows + "-row gui");
         }
     }
 

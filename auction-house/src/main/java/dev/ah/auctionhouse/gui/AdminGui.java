@@ -41,7 +41,7 @@ public class AdminGui {
             slot++;
         }
 
-        gui.on(49, () -> openSalesLog(admin)).set(49, new ItemStack(Material.BOOK, 1));
+        gui.on(49, () -> openSalesLog(admin)).set(49, GuiItems.button(services, Material.BOOK, "admin.sales.button"));
         services.sounds().play(admin, SoundRegistry.Event.OPEN);
         gui.open(admin);
     }

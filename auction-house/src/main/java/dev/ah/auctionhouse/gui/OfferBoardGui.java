@@ -47,9 +47,9 @@ public class OfferBoardGui {
             }
             long offerId = offer.id();
             if (viewer.getUniqueId().equals(listing.owner()) || viewer.hasPermission("ah.admin")) {
-                gui.on(36, () -> decide(offerId, true)).set(36, new ItemStack(Material.LIME_DYE, 1));
-                gui.on(38, () -> decide(offerId, false)).set(38, new ItemStack(Material.RED_DYE, 1));
-                gui.on(40, () -> openItems(offer)).set(40, new ItemStack(Material.DIAMOND, 1));
+                gui.on(36, () -> decide(offerId, true)).set(36, GuiItems.button(services, Material.LIME_DYE, "offer-board.accept"));
+                gui.on(38, () -> decide(offerId, false)).set(38, GuiItems.button(services, Material.RED_DYE, "offer-board.reject"));
+                gui.on(40, () -> openItems(offer)).set(40, GuiItems.button(services, Material.DIAMOND, "offer-board.inspect"));
             }
         }
         services.sounds().play(viewer, SoundRegistry.Event.OPEN);

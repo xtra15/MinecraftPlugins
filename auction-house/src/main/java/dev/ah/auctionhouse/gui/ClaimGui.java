@@ -63,7 +63,7 @@ public class ClaimGui {
 
         gui.on(53, () -> open(player, pageIndex + 1)).set(53, arrow("NEXT"));
         gui.on(45, () -> open(player, pageIndex - 1)).set(45, arrow("PREV"));
-        gui.on(49, () -> player.closeInventory()).set(49, new ItemStack(Material.BARRIER, 1));
+        gui.on(49, () -> player.closeInventory()).set(49, GuiItems.button(services, Material.BARRIER, "gui.buttons.close"));
         services.sounds().play(player, SoundRegistry.Event.OPEN);
         gui.open(player);
     }

@@ -76,25 +76,24 @@ public class AhMainGui {
             slot++;
         }
 
-        gui.on(53, () -> open(player, pageIndex + 1)).set(53, arrow("NEXT"));
-        gui.on(45, () -> open(player, pageIndex - 1)).set(45, arrow("PREV"));
-        gui.on(49, this::toggleSort).set(49, new ItemStack(Material.COMPASS, 1));
+        gui.on(53, () -> open(player, pageIndex + 1)).set(53, GuiItems.button(services, Material.ARROW,
+                "gui.buttons.next", "gui.buttons.next-lore", Map.of()));
+        gui.on(45, () -> open(player, pageIndex - 1)).set(45, GuiItems.button(services, Material.ARROW,
+                "gui.buttons.prev", "gui.buttons.prev-lore", Map.of()));
+        gui.on(49, this::toggleSort).set(49, GuiItems.button(services, Material.COMPASS,
+                "gui.buttons.sort", "gui.buttons.sort-lore", Map.of()));
         gui.on(47, clk -> {
             clk.player().closeInventory();
             clk.player().performCommand("ah search ");
-        }).set(47, new ItemStack(Material.OAK_SIGN, 1));
-        gui.on(50, () -> new ClaimGui(services).open(player, 0)).set(50, new ItemStack(Material.CHEST, 1));
+        }).set(47, GuiItems.button(services, Material.OAK_SIGN,
+                "gui.buttons.search", "gui.buttons.search-lore", Map.of()));
+        gui.on(50, () -> new ClaimGui(services).open(player, 0)).set(50, GuiItems.button(services, Material.CHEST,
+                "gui.buttons.claim", "gui.buttons.claim-lore", Map.of()));
         services.sounds().play(player, SoundRegistry.Event.OPEN);
         gui.open(player);
     }
 
     private void toggleSort() {
         sort = sort.equals("newest") ? "oldest" : "newest";
-    }
-
-    private ItemStack arrow(String label) {
-        ItemStack i = new ItemStack(Material.ARROW, 1);
-        i.editMeta(m -> m.displayName(MM.deserialize("<gray>" + label)));
-        return i;
     }
 }

@@ -19,12 +19,12 @@ public class SellGui {
     }
 
     public void open(Player player) {
-        DepositGui gui = new DepositGui(4, services.messages().get("sell.title"), 9, 17);
+        DepositGui gui = new DepositGui(5, services.messages().get("sell.title"), 9, 17);
         gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
         gui.fillRect(9, 17, null);
-        gui.set(0, new ItemStack(Material.NAME_TAG, 1));
-        gui.on(39, () -> onConfirm(player, gui)).set(39, confirmItem("CONFIRM"));
-        gui.on(41, () -> gui.cancelAndReturn(player)).set(41, cancelItem("CANCEL"));
+        gui.set(0, GuiItems.button(services, Material.NAME_TAG, "sell.preview"));
+        gui.on(39, () -> onConfirm(player, gui)).set(39, GuiItems.button(services, Material.LIME_DYE, "gui.buttons.confirm"));
+        gui.on(41, () -> gui.cancelAndReturn(player)).set(41, GuiItems.button(services, Material.BARRIER, "gui.buttons.cancel"));
         services.gui().registerOpen(player, gui);
         services.sounds().play(player, SoundRegistry.Event.OPEN);
         gui.open(player);
@@ -45,17 +45,5 @@ public class SellGui {
             services.sounds().play(player, SoundRegistry.Event.ERROR);
             gui.cancelAndReturn(player);
         }
-    }
-
-    private ItemStack confirmItem(String label) {
-        ItemStack i = new ItemStack(Material.LIME_DYE, 1);
-        i.editMeta(m -> m.displayName(MM.deserialize("<green>" + label)));
-        return i;
-    }
-
-    private ItemStack cancelItem(String label) {
-        ItemStack i = new ItemStack(Material.BARRIER, 1);
-        i.editMeta(m -> m.displayName(MM.deserialize("<red>" + label)));
-        return i;
     }
 }
