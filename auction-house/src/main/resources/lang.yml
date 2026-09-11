@@ -62,6 +62,8 @@ gui:
 offer-board:
   title: "<gold>Offers"
   items-viewer: "<gold>Offered items"
+  empty: "<gray>No pending offers."
+  by: "<yellow>Offer <index>/<total> from <white><name>"
   accept: "<green>Accept this offer"
   reject: "<red>Reject this offer"
   inspect: "<yellow>View offered items"

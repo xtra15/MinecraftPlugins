@@ -8,15 +8,18 @@ import dev.ah.core.misc.ItemBundleCodec;
 import dev.ah.core.msg.SoundRegistry;
 import dev.ah.core.offer.Offer;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import java.util.List;
+import java.util.Map;
 
 public class OfferBoardGui {
     private final AhServices services;
     private final long listingId;
     private final Player viewer;
+    private int offerIndex;
     private static final MiniMessage MM = MiniMessage.miniMessage();
 
     public OfferBoardGui(AhServices services, long listingId, Player viewer) {
@@ -28,29 +31,54 @@ public class OfferBoardGui {
     public void open() {
         Listing listing = services.listings().byId(listingId).orElse(null);
         if (listing == null) return;
-        ChestGui gui = new ChestGui(6, services.messages().get("offer-board.title"));
-        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
-
-        List<ItemStack> auctioned = ItemBundleCodec.decode(listing.itemData());
-        for (int i = 0; i < Math.min(auctioned.size(), 5); i++) {
-            gui.set(18 + i, auctioned.get(i).clone());
-        }
-
         List<Offer> pending = services.offers().byListing(listingId).stream()
                 .filter(Offer::isPending)
                 .toList();
-        if (!pending.isEmpty()) {
-            Offer offer = pending.get(0);
-            List<ItemStack> offered = ItemBundleCodec.decode(offer.itemsData());
-            for (int i = 0; i < Math.min(offered.size(), 12); i++) {
-                gui.set(24 + i, offered.get(i).clone());
-            }
+        if (offerIndex >= pending.size()) offerIndex = Math.max(0, pending.size() - 1);
+
+        ChestGui gui = new ChestGui(6, services.messages().get("offer-board.title"));
+        gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
+
+        List<ItemStack> auctioned = ItemBundleCodec.decode(listing.itemData());
+        for (int i = 0; i < Math.min(auctioned.size(), 5); i++) {
+            gui.set(9 + i, auctioned.get(i).clone());
+        }
+
+        if (pending.isEmpty()) {
+            gui.set(22, GuiItems.button(services, Material.PAPER, "offer-board.empty"));
+            services.sounds().play(viewer, SoundRegistry.Event.OPEN);
+            gui.open(viewer);
+            return;
+        }
+
+        Offer offer = pending.get(offerIndex);
+        List<ItemStack> offered = ItemBundleCodec.decode(offer.itemsData());
+
+        String name = Bukkit.getOfflinePlayer(offer.offerer()).getName();
+        String display = name == null ? offer.offerer().toString().substring(0, 8) : name;
+        ItemStack by = new ItemStack(Material.NAME_TAG, 1);
+        by.editMeta(meta -> meta.displayName(MM.deserialize(services.messages().get("offer-board.by",
+                Map.of("name", display,
+                        "index", String.valueOf(offerIndex + 1),
+                        "total", String.valueOf(pending.size()))))));
+        gui.set(4, by);
+
+        for (int i = 0; i < Math.min(offered.size(), 12); i++) {
+            gui.set(18 + i, offered.get(i).clone());
+        }
+
+        boolean manage = viewer.getUniqueId().equals(listing.owner()) || viewer.hasPermission("ah.admin");
+        if (manage) {
             long offerId = offer.id();
-            if (viewer.getUniqueId().equals(listing.owner()) || viewer.hasPermission("ah.admin")) {
-                gui.on(36, () -> decide(offerId, true)).set(36, GuiItems.button(services, Material.LIME_DYE, "offer-board.accept"));
-                gui.on(38, () -> decide(offerId, false)).set(38, GuiItems.button(services, Material.RED_DYE, "offer-board.reject"));
-                gui.on(40, () -> openItems(offer)).set(40, GuiItems.button(services, Material.DIAMOND, "offer-board.inspect"));
-            }
+            gui.on(48, () -> openItems(offer)).set(48, GuiItems.button(services, Material.DIAMOND, "offer-board.inspect"));
+            gui.on(50, () -> decide(offerId, true)).set(50, GuiItems.button(services, Material.LIME_DYE, "offer-board.accept"));
+            gui.on(52, () -> decide(offerId, false)).set(52, GuiItems.button(services, Material.RED_DYE, "offer-board.reject"));
+        }
+        if (pending.size() > 1) {
+            gui.on(45, () -> { offerIndex = Math.max(0, offerIndex - 1); open(); }).set(45, GuiItems.button(services,
+                    Material.ARROW, "gui.buttons.prev", "gui.buttons.prev-lore", Map.of()));
+            gui.on(53, () -> { offerIndex = Math.min(pending.size() - 1, offerIndex + 1); open(); }).set(53, GuiItems.button(services,
+                    Material.ARROW, "gui.buttons.next", "gui.buttons.next-lore", Map.of()));
         }
         services.sounds().play(viewer, SoundRegistry.Event.OPEN);
         gui.open(viewer);
