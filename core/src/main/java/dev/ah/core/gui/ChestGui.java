@@ -1,6 +1,7 @@
 package dev.ah.core.gui;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -16,6 +17,7 @@ public class ChestGui {
     public record Slot(ItemStack item, Consumer<Click> action) {}
 
     private static final Map<Inventory, ChestGui> OPEN = new ConcurrentHashMap<>();
+    private static final MiniMessage MM = MiniMessage.miniMessage();
 
     private final int rows;
     private final Map<Integer, Slot> slots = new LinkedHashMap<>();
@@ -24,11 +26,11 @@ public class ChestGui {
 
     public ChestGui(int rows, String title) {
         this.rows = rows;
-        this.title = Component.text(title);
+        this.title = MM.deserialize(title);
     }
 
     public ChestGui title(String title) {
-        this.title = Component.text(title);
+        this.title = MM.deserialize(title);
         return this;
     }
 
