@@ -28,6 +28,7 @@ public class MessageRepository {
         String value = get(key);
         for (Map.Entry<String, String> e : placeholders.entrySet()) {
             value = value.replace("{" + e.getKey() + "}", e.getValue());
+            value = value.replace("<" + e.getKey() + ">", e.getValue());
         }
         return value;
     }

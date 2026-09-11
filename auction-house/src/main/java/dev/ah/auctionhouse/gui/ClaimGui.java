@@ -35,8 +35,7 @@ public class ClaimGui {
 
         ChestGui gui = new ChestGui(6, services.messages().get("claims.title",
                 Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(totalPages))));
-        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
-        gui.fillRect(9, 44, null);
+        gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
 
         if (rows.isEmpty()) {
             gui.set(22, GuiItems.button(services, Material.PAPER, "claims.empty"));

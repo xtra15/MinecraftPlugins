@@ -50,8 +50,7 @@ public class AhMainGui {
         List<Listing> pageRows = services.listings().activePage(pageSize, pageIndex * pageSize, needle, oldest);
 
         ChestGui gui = new ChestGui(6, services.messages().get("gui.main.title"));
-        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
-        gui.fillRect(9, 44, null);
+        gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
 
         int slot = 9;
         java.util.Map<Long, Long> pendingOffers = services.offers()

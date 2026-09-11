@@ -26,8 +26,7 @@ public class AdminGui {
 
     public void open(Player admin) {
         ChestGui gui = new ChestGui(6, services.messages().get("admin.title"));
-        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
-        gui.fillRect(9, 44, null);
+        gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
 
         List<UUID> players = services.listings().activeOwners(1000);
         int slot = 9;
@@ -57,8 +56,7 @@ public class AdminGui {
 
         ChestGui gui = new ChestGui(6, services.messages().get("admin.user.title",
                 Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(totalPages))));
-        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
-        gui.fillRect(9, 44, null);
+        gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
         List<Listing> ownerListings = services.listings().byOwner(uuid, perPage, pageIndex * perPage);
         java.util.Map<Long, Long> pendingOffers = services.offers()
                 .countPendingByListings(ownerListings.stream().map(Listing::id).toList());
@@ -92,8 +90,7 @@ public class AdminGui {
 
     private void openSalesLog(Player admin) {
         ChestGui gui = new ChestGui(6, services.messages().get("admin.sales.title"));
-        gui.fill(new ItemStack(services.guiFillerMaterial(), 1));
-        gui.fillRect(9, 44, null);
+        gui.fillRect(45, 53, new ItemStack(services.guiFillerMaterial(), 1));
         int slot = 9;
         for (SalesLogRow row : services.sales().recent(36)) {
             if (slot > 44) break;

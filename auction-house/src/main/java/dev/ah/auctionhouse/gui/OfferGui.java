@@ -30,7 +30,7 @@ public class OfferGui {
             return;
         }
         DepositGui gui = new DepositGui(5, services.messages().get("offer.title"), 9, 17);
-        gui.fillRect(0, 8, new ItemStack(services.guiFillerMaterial(), 1));
+        gui.fillRect(36, 44, new ItemStack(services.guiFillerMaterial(), 1));
         gui.fillRect(9, 17, null);
         List<ItemStack> preview = ItemBundleCodec.decode(listing.itemData());
         if (!preview.isEmpty()) gui.set(0, preview.get(0).clone());
