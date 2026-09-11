@@ -89,11 +89,12 @@ public class AhMainGui {
             long offers = pendingOffers.getOrDefault(listing.id(), 0L);
             String price = services.isEconomyEnabled() && listing.price() != null
                     ? String.valueOf(listing.price()) : "—";
+            String remaining = IconUtil.humanize(listing.expiresAt() - System.currentTimeMillis());
             List<Component> lore = List.of(
                     MM.deserialize(services.messages().get("listings.lore.price", Map.of("price", price))),
                     MM.deserialize(services.messages().get("listings.lore.offers", Map.of("count", String.valueOf(offers)))),
                     MM.deserialize(services.messages().get("listings.lore.remaining",
-                            Map.of("time", IconUtil.humanize(listing.expiresAt() - System.currentTimeMillis())))));
+                            Map.of("time", remaining, "minutes", remaining, "days", remaining))));
             icon.editMeta(meta -> meta.lore(lore));
             long listingId = listing.id();
             gui.on(slot, clk -> { clk.player().closeInventory(); new OfferGui(services, listingId).open(clk.player()); });
