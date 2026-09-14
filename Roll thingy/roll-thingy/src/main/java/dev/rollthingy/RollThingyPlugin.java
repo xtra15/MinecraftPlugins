@@ -1,8 +1,10 @@
 package dev.rollthingy;
 
+import dev.rollthingy.command.RollCommand;
+import dev.rollthingy.listener.ChatPrompt;
+import dev.rollthingy.listener.MenuListener;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
-import dev.rollthingy.listener.MenuListener;
 
 public final class RollThingyPlugin extends JavaPlugin {
     private RollServices services;
@@ -11,6 +13,13 @@ public final class RollThingyPlugin extends JavaPlugin {
     public void onEnable() {
         services = new RollServices(this);
         Bukkit.getPluginManager().registerEvents(new MenuListener(services.gui()), this);
+        Bukkit.getPluginManager().registerEvents(new ChatPrompt(this), this);
+        RollCommand command = new RollCommand(this);
+        org.bukkit.command.PluginCommand roll = getCommand("roll");
+        if (roll != null) {
+            roll.setExecutor(command);
+            roll.setTabCompleter(command);
+        }
         getLogger().info("RollThingy enabled.");
     }
 
