@@ -5,7 +5,7 @@ api-version: "26.1.2"
 commands:
   roll:
     description: Roll Thingy gambling system
-    aliases: [rollthingy]
+    aliases: [rollthingy, spin, box]
 permissions:
   roll.use:
     description: Use the gambling boxes
