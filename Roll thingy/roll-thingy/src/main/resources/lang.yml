@@ -10,6 +10,9 @@ detail:
 preview:
   title: "<gold>Prizes <gray>-<white> page <page>/<pages>"
   empty: "<gray>No prizes in this box"
+gui:
+  page-prev: "<gray><< Previous"
+  page-next: "<gray>Next >>"
 spin:
   title: "<gold>Spin <name>"
   deposit: "<gray>Place payment items here"
@@ -25,6 +28,8 @@ claim:
   collect: "<green>Collect all"
   withdrawn: "<green>You collected your prizes!"
   no-space: "<red>Not enough space in your inventory!"
+  row-title: "<gold><count>x prize <gray>-<white> <date>"
+  more: "<gray>+<extra> more items"
 admin:
   title: "<gold>Roll Admin <gray>-<white> page <page>/<pages>"
   create: "<green>Create a new box"

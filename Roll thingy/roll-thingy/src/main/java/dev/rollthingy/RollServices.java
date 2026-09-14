@@ -16,6 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 
 public class RollServices {
+    private final JavaPlugin plugin;
     private final SqliteDatabase db;
     private final CooldownStore cooldowns;
     private final ClaimStore claims;
@@ -28,6 +29,7 @@ public class RollServices {
     private final GuiManager gui;
 
     public RollServices(JavaPlugin plugin) {
+        this.plugin = plugin;
         this.config = new RollConfig(plugin);
         this.db = new SqliteDatabase(new File(plugin.getDataFolder(), "data.db"));
         db.init();
@@ -53,6 +55,7 @@ public class RollServices {
     public MessageRepository messages() { return messages; }
     public SoundRegistry sounds() { return sounds; }
     public GuiManager gui() { return gui; }
+    public JavaPlugin plugin() { return plugin; }
     public CooldownStore cooldowns() { return cooldowns; }
     public ClaimStore claims() { return claims; }
 }
