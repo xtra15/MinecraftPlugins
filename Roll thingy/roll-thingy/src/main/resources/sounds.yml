@@ -1,0 +1,45 @@
+open:
+  sound: "BLOCK_ENDER_CHEST_OPEN"
+  pitch: 1.0
+  volume: 1.0
+  enabled: true
+click:
+  sound: "UI_BUTTON_CLICK"
+  pitch: 1.0
+  volume: 1.0
+  enabled: true
+confirm:
+  sound: "ENTITY_EXPERIENCE_ORB_PICKUP"
+  pitch: 1.0
+  volume: 1.0
+  enabled: true
+cancel:
+  sound: "BLOCK_CHEST_CLOSE"
+  pitch: 1.0
+  volume: 1.0
+  enabled: true
+spin:
+  sound: "ENTITY_ARROW_SHOOT"
+  pitch: 1.0
+  volume: 1.0
+  enabled: true
+win:
+  sound: "ENTITY_PLAYER_LEVELUP"
+  pitch: 1.0
+  volume: 1.0
+  enabled: true
+win-rare:
+  sound: "ENTITY_WITHER_SPAWN"
+  pitch: 1.0
+  volume: 1.0
+  enabled: true
+zonk:
+  sound: "ENTITY_VILLAGER_NO"
+  pitch: 1.0
+  volume: 1.0
+  enabled: true
+error:
+  sound: "ENTITY_VILLAGER_NO"
+  pitch: 1.0
+  volume: 1.0
+  enabled: true
