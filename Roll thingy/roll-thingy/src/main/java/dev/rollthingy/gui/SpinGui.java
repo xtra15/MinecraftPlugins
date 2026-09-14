@@ -25,6 +25,11 @@ public class SpinGui {
         this.services = services;
     }
 
+    /**
+     * Geyser note: the spin screen intentionally uses a plain click-to-spin flow with the payment
+     * strip accepting shift-clicks or drag; Bedrock players have no right-click so every action is
+     * a simple click. Item names are hover/lore text (Bedrock safe).
+     */
     public void open(Player player, Box box) {
         StemGui gui = new StemGui(services, box);
         services.gui().registerOpen(player, gui);

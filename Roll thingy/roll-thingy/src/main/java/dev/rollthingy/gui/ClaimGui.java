@@ -68,8 +68,14 @@ public class ClaimGui {
 
         gui.on(0, clk -> { clk.player().closeInventory(); new MainGui(services).open(clk.player(), 0); })
                 .set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
-        gui.on(45, clk -> open(clk.player(), pageIndex - 1)).set(45, button(Material.ARROW, "<gray><<"));
-        gui.on(53, clk -> open(clk.player(), pageIndex + 1)).set(53, button(Material.ARROW, ">>"));
+        gui.on(45, clk -> {
+            services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
+            open(clk.player(), pageIndex - 1);
+        }).set(45, button(Material.ARROW, "<gray><<"));
+        gui.on(53, clk -> {
+            services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
+            open(clk.player(), pageIndex + 1);
+        }).set(53, button(Material.ARROW, ">>"));
         gui.on(49, clk -> clk.player().closeInventory()).set(49, button(Material.BARRIER, "<red>Close"));
         gui.on(50, clk -> collectAll(clk.player())).set(50, button(Material.HOPPER,
                 services.messages().get("claim.collect")));

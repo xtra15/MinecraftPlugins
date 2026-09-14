@@ -50,8 +50,14 @@ public class RarityGui {
             slot++;
         }
 
-        gui.on(45, clk -> open(clk.player(), box, pageIndex - 1)).set(45, button(Material.ARROW, "<gray><<"));
-        gui.on(53, clk -> open(clk.player(), box, pageIndex + 1)).set(53, button(Material.ARROW, ">>"));
+        gui.on(45, clk -> {
+            services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
+            open(clk.player(), box, pageIndex - 1);
+        }).set(45, button(Material.ARROW, "<gray><<"));
+        gui.on(53, clk -> {
+            services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
+            open(clk.player(), box, pageIndex + 1);
+        }).set(53, button(Material.ARROW, ">>"));
         gui.on(49, clk -> addRarity(admin, box)).set(49, button(Material.EMERALD, services.messages().get("admin.rarity.add")));
         gui.on(0, clk -> new EditGui(services).open(clk.player(), box)).set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
         services.sounds().play(admin, SoundRegistry.Event.OPEN);

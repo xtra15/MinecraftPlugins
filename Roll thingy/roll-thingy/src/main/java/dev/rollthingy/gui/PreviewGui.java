@@ -57,8 +57,14 @@ public class PreviewGui {
 
         gui.on(0, clk -> new BoxDetailGui(services).open(clk.player(), box))
                 .set(0, button("Back"));
-        gui.on(45, clk -> open(clk.player(), box, pageIndex - 1)).set(45, button("<gray><<"));
-        gui.on(53, clk -> open(clk.player(), box, pageIndex + 1)).set(53, button(">>"));
+        gui.on(45, clk -> {
+            services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
+            open(clk.player(), box, pageIndex - 1);
+        }).set(45, button("<gray><<"));
+        gui.on(53, clk -> {
+            services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
+            open(clk.player(), box, pageIndex + 1);
+        }).set(53, button(">>"));
         services.sounds().play(player, SoundRegistry.Event.OPEN);
         gui.open(player);
     }

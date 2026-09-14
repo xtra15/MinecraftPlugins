@@ -46,8 +46,14 @@ public class MainGui {
             slot++;
         }
 
-        gui.on(45, clk -> open(clk.player(), pageIndex - 1)).set(45, arrow("gui.page-prev"));
-        gui.on(53, clk -> open(clk.player(), pageIndex + 1)).set(53, arrow("gui.page-next"));
+        gui.on(45, clk -> {
+            services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
+            open(clk.player(), pageIndex - 1);
+        }).set(45, arrow("gui.page-prev"));
+        gui.on(53, clk -> {
+            services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
+            open(clk.player(), pageIndex + 1);
+        }).set(53, arrow("gui.page-next"));
         services.sounds().play(player, SoundRegistry.Event.OPEN);
         gui.open(player);
     }

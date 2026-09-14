@@ -53,8 +53,14 @@ public class AdminGui {
             slot++;
         }
 
-        gui.on(45, clk -> open(clk.player(), pageIndex - 1)).set(45, button(Material.ARROW, "<gray><<"));
-        gui.on(53, clk -> open(clk.player(), pageIndex + 1)).set(53, button(Material.ARROW, ">>"));
+        gui.on(45, clk -> {
+            services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
+            open(clk.player(), pageIndex - 1);
+        }).set(45, button(Material.ARROW, "<gray><<"));
+        gui.on(53, clk -> {
+            services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
+            open(clk.player(), pageIndex + 1);
+        }).set(53, button(Material.ARROW, ">>"));
         gui.on(49, clk -> create(clk.player())).set(49, button(Material.EMERALD_BLOCK,
                 services.messages().get("admin.create")));
         gui.on(0, clk -> { clk.player().closeInventory(); new MainGui(services).open(clk.player(), 0); })
