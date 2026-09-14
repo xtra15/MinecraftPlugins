@@ -1,0 +1,15 @@
+name: RollThingy
+version: 1.0.0
+main: dev.rollthingy.RollThingyPlugin
+api-version: "26.1.2"
+commands:
+  roll:
+    description: Roll Thingy gambling system
+    aliases: [rollthingy]
+permissions:
+  roll.use:
+    description: Use the gambling boxes
+    default: true
+  roll.admin:
+    description: Manage gambling boxes
+    default: op
