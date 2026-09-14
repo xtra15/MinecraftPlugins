@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class YamlBoxCodec {
-    private YamlBoxCodec() {}
+    public YamlBoxCodec() {}
 
     public static String toString(Box box) {
         YamlConfiguration conf = new YamlConfiguration();
