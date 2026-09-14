@@ -1,11 +1,9 @@
 package dev.rollthingy.gui;
 
-import dev.rollthingy.RollService;
 import dev.rollthingy.RollServices;
 import dev.rollthingy.core.box.Box;
 import dev.rollthingy.core.box.PaymentRequirement;
 import dev.rollthingy.core.gui.ChestGui;
-import dev.rollthingy.core.misc.ItemBundleCodec;
 import dev.rollthingy.core.msg.SoundRegistry;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
@@ -14,7 +12,6 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 public class BoxDetailGui {
@@ -33,10 +30,10 @@ public class BoxDetailGui {
         gui.fill(services.config().fillerItem());
         gui.fillRect(9, 44, null);
 
-        ItemStack icon = MainGui.iconStack(box);
+        ItemStack icon = services.cache().icon(box);
         List<net.kyori.adventure.text.Component> lore = new ArrayList<>();
         for (PaymentRequirement req : box.payment()) {
-            String material = materialOf(req.data());
+            String material = services.cache().materialOf(req.data());
             String amount = String.valueOf(req.amount());
             String mode = req.strict() ? "<gold>exact" : "<gold>type-only";
             lore.add(MM.deserialize(services.messages().get("detail.payment")
@@ -72,16 +69,6 @@ public class BoxDetailGui {
 
         services.sounds().play(player, SoundRegistry.Event.OPEN);
         gui.open(player);
-    }
-
-    private static String materialOf(String data) {
-        try {
-            List<Map<String, Object>> maps = ItemBundleCodec.decodeMaps(data);
-            if (!maps.isEmpty() && maps.get(0).containsKey("type")) {
-                return String.valueOf(maps.get(0).get("type")).toLowerCase(Locale.ROOT).replace('_', ' ');
-            }
-        } catch (IllegalArgumentException ignored) {}
-        return "?";
     }
 
     private ItemStack button(Material material, String text) {

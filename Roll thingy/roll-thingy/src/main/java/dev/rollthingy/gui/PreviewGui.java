@@ -4,7 +4,6 @@ import dev.rollthingy.RollServices;
 import dev.rollthingy.core.box.Box;
 import dev.rollthingy.core.box.OddsEngine;
 import dev.rollthingy.core.gui.ChestGui;
-import dev.rollthingy.core.misc.ItemBundleCodec;
 import dev.rollthingy.core.msg.SoundRegistry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -78,13 +77,7 @@ public class PreviewGui {
             var boxTier = box.tiers().get(t);
             for (int i = 0; i < boxTier.items().size(); i++) {
                 double chance = model.chanceOf(tier, i);
-                ItemStack icon;
-                try {
-                    List<ItemStack> decoded = ItemBundleCodec.decode(boxTier.items().get(i).data());
-                    icon = decoded.isEmpty() ? new ItemStack(Material.BARRIER) : decoded.get(0).clone();
-                } catch (IllegalArgumentException e) {
-                    icon = new ItemStack(Material.BARRIER);
-                }
+                ItemStack icon = services.cache().item(boxTier.items().get(i).data());
                 String rarity = boxTier.name();
                 String chanceStr = formatChance(chance);
                 icon.editMeta(meta -> {

@@ -3,7 +3,6 @@ package dev.rollthingy.gui;
 import dev.rollthingy.RollServices;
 import dev.rollthingy.core.box.Box;
 import dev.rollthingy.core.gui.ChestGui;
-import dev.rollthingy.core.misc.ItemBundleCodec;
 import dev.rollthingy.core.msg.SoundRegistry;
 import dev.rollthingy.core.misc.Pager;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -39,7 +38,7 @@ public class MainGui {
         int slot = 9;
         for (Box box : pageBoxes) {
             if (slot > 44) break;
-            ItemStack icon = iconStack(box);
+            ItemStack icon = services.cache().icon(box);
             icon.editMeta(meta -> meta.displayName(MM.deserialize("<gold>" + box.name())));
             gui.on(slot, clk -> new BoxDetailGui(services).open(clk.player(), box));
             gui.set(slot, icon);
@@ -56,20 +55,6 @@ public class MainGui {
         }).set(53, arrow("gui.page-next"));
         services.sounds().play(player, SoundRegistry.Event.OPEN);
         gui.open(player);
-    }
-
-    public static ItemStack iconStack(Box box) {
-        if (box.icon() != null && box.icon().data() != null && !box.icon().data().isBlank()) {
-            try {
-                List<ItemStack> decoded = ItemBundleCodec.decode(box.icon().data());
-                if (!decoded.isEmpty()) return decoded.get(0);
-            } catch (IllegalArgumentException ignored) {}
-        }
-        try {
-            return new ItemStack(Material.valueOf(box.icon() != null ? box.icon().material() : "CHEST"), 1);
-        } catch (IllegalArgumentException e) {
-            return new ItemStack(Material.CHEST, 1);
-        }
     }
 
     private ItemStack arrow(String key) {

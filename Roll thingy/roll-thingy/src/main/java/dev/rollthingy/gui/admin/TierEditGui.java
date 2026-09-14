@@ -5,6 +5,7 @@ import dev.rollthingy.core.box.Box;
 import dev.rollthingy.core.box.BoxItem;
 import dev.rollthingy.core.box.RarityTier;
 import dev.rollthingy.core.gui.ChestGui;
+import dev.rollthingy.core.gui.DepositGui;
 import dev.rollthingy.core.misc.ItemBundleCodec;
 import dev.rollthingy.core.msg.SoundRegistry;
 import dev.rollthingy.listener.ChatPrompt;
@@ -25,44 +26,74 @@ public class TierEditGui {
         this.services = services;
     }
 
-    /** Item-drop editor for a single tier. Slots 9-17 hold candidate items; 44 confirms them. */
+    /** Item-drop editor for a single tier. Slots 9-17 hold candidate items; 40 confirms them. */
     public void openDrop(Player admin, Box box, int tierIndex) {
-        ChestGui gui = new ChestGui(6, services.messages().get("admin.rarity.add"));
-        gui.fill(services.config().fillerItem());
-        gui.fillRect(9, 17, null);
-        gui.fillRect(45, 53, new ItemStack(Material.GRAY_STAINED_GLASS_PANE, 1));
-        gui.on(0, clk -> new RarityGui(services).open(clk.player(), box, Integer.MAX_VALUE))
-                .set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
-        gui.on(40, clk -> collectDrop(clk.player(), box, tierIndex))
-                .set(40, button(Material.EMERALD, services.messages().get("admin.confirm")));
+        StemDrop gui = new StemDrop(services, box, tierIndex);
+        services.gui().registerOpen(admin, gui);
         services.sounds().play(admin, SoundRegistry.Event.OPEN);
         gui.open(admin);
     }
 
-    private void collectDrop(Player admin, Box box, int tierIndex) {
-        if (tierIndex >= box.tiers().size()) return;
-        RarityTier tier = box.tiers().get(tierIndex);
-        List<BoxItem> items = new ArrayList<>(tier.items());
-        boolean added = false;
-        for (int i = 9; i <= 17; i++) {
-            ItemStack item = admin.getOpenInventory().getTopInventory().getItem(i);
-            if (item == null || item.getType().isAir()) continue;
-            String data = ItemBundleCodec.encode(List.of(item.clone()));
-            items.add(new BoxItem(data, 1.0));
-            added = true;
+    private static final class StemDrop extends DepositGui {
+        private final RollServices services;
+        private final Box box;
+        private final int tierIndex;
+
+        StemDrop(RollServices services, Box box, int tierIndex) {
+            super(6, services.messages().get("admin.rarity.add"), 9, 17);
+            this.services = services;
+            this.box = box;
+            this.tierIndex = tierIndex;
+            draw();
         }
-        if (!added) {
-            admin.sendMessage(MM.deserialize(services.messages().get("errors.unknown")));
-            services.sounds().play(admin, SoundRegistry.Event.ERROR);
-            return;
+
+        private void draw() {
+            fill(services.config().fillerItem());
+            fillRect(9, 17, null);
+            fillRect(45, 53, new ItemStack(Material.GRAY_STAINED_GLASS_PANE, 1));
+            on(0, clk -> new RarityGui(services).open(clk.player(), box, Integer.MAX_VALUE))
+                    .set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
+            on(40, clk -> collectDrop(clk.player())).set(40, button(Material.EMERALD, services.messages().get("admin.confirm")));
         }
-        List<RarityTier> tiers = new ArrayList<>(box.tiers());
-        tiers.set(tierIndex, new RarityTier(tier.name(), tier.weight(), items));
-        Box updated = new Box(box.id(), box.name(), box.icon(), box.payment(), box.penalty(),
-                box.cooldownSeconds(), box.zonk(), tiers);
-        services.cache().addOrUpdate(updated);
-        admin.sendMessage(MM.deserialize(services.messages().get("admin.saved")));
-        new RarityGui(services).open(admin, updated, Integer.MAX_VALUE);
+
+        private void collectDrop(Player admin) {
+            if (tierIndex >= box.tiers().size()) return;
+            RarityTier tier = box.tiers().get(tierIndex);
+            List<BoxItem> items = new ArrayList<>(tier.items());
+            boolean added = false;
+            for (int i = 9; i <= 17; i++) {
+                ItemStack item = inventory().getItem(i);
+                if (item == null || item.getType().isAir()) continue;
+                String data = ItemBundleCodec.encode(List.of(item.clone()));
+                items.add(new BoxItem(data, 1.0));
+                added = true;
+            }
+            if (!added) {
+                admin.sendMessage(MM.deserialize(services.messages().get("errors.unknown")));
+                services.sounds().play(admin, SoundRegistry.Event.ERROR);
+                return;
+            }
+            List<RarityTier> tiers = new ArrayList<>(box.tiers());
+            tiers.set(tierIndex, new RarityTier(tier.name(), tier.weight(), items));
+            Box updated = new Box(box.id(), box.name(), box.icon(), box.payment(), box.penalty(),
+                    box.cooldownSeconds(), box.zonk(), tiers);
+            services.cache().addOrUpdate(updated);
+            markConfirmed();
+            clearDrop();
+            admin.sendMessage(MM.deserialize(services.messages().get("admin.saved")));
+            new RarityGui(services).open(admin, updated, Integer.MAX_VALUE);
+        }
+
+        private void clearDrop() {
+            if (inventory() == null) return;
+            for (int i = 9; i <= 17; i++) inventory().setItem(i, null);
+        }
+
+        private ItemStack button(Material material, String text) {
+            ItemStack item = new ItemStack(material, 1);
+            item.editMeta(meta -> meta.displayName(MM.deserialize(text)));
+            return item;
+        }
     }
 
     public void open(Player admin, Box box, int tierIndex) {
@@ -77,13 +108,7 @@ public class TierEditGui {
         int slot = 9;
         for (int i = 0; i < tier.items().size() && slot <= 44; i++) {
             BoxItem item = tier.items().get(i);
-            ItemStack icon;
-            try {
-                List<ItemStack> decoded = ItemBundleCodec.decode(item.data());
-                icon = decoded.isEmpty() ? new ItemStack(Material.BARRIER) : decoded.get(0).clone();
-            } catch (IllegalArgumentException e) {
-                icon = new ItemStack(Material.BARRIER);
-            }
+            ItemStack icon = services.cache().item(item.data());
             final int itemIndex = i;
             icon.editMeta(meta -> meta.lore(List.of(MM.deserialize("weight <white>" + item.weight()))));
             gui.on(slot, clk -> setItemWeight(admin, box, tierIndex, itemIndex));

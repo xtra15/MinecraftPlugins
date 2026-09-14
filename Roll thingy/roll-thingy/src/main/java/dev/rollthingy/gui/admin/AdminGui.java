@@ -42,7 +42,7 @@ public class AdminGui {
         int slot = 9;
         for (int i = from; i < to && slot <= 44; i++) {
             Box box = all.get(i);
-            ItemStack icon = MainGui.iconStack(box);
+            ItemStack icon = services.cache().icon(box);
             icon.editMeta(meta -> {
                 meta.displayName(MM.deserialize("<gold>" + box.name()));
                 meta.lore(List.of(MM.deserialize("<gray>" + box.id())));
@@ -83,7 +83,7 @@ public class AdminGui {
                     new Penalty(0.5, 50, 20), 5L, new Zonk(true, 5.0), List.of());
             services.cache().addOrUpdate(box);
             admin.sendMessage(MM.deserialize(services.messages().get("admin.saved")));
-            new IconPickerGui(services, box).open(admin);
+            new IconPickerGui(services).open(admin, box);
         });
     }
 

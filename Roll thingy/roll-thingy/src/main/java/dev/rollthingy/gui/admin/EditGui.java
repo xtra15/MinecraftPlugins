@@ -8,7 +8,6 @@ import dev.rollthingy.core.box.Zonk;
 import dev.rollthingy.core.gui.DepositGui;
 import dev.rollthingy.core.misc.ItemBundleCodec;
 import dev.rollthingy.core.msg.SoundRegistry;
-import dev.rollthingy.gui.MainGui;
 import dev.rollthingy.listener.ChatPrompt;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
@@ -56,7 +55,7 @@ public class EditGui {
                 new AdminGui(services).open(clk.player(), 0);
             }).set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
 
-            ItemStack icon = MainGui.iconStack(box);
+            ItemStack icon = services.cache().icon(box);
             icon.editMeta(meta -> meta.lore(List.of(MM.deserialize("<gray>" + box.id()))));
             set(4, icon);
 
@@ -68,7 +67,7 @@ public class EditGui {
                     .set(47, button(Material.DIAMOND, services.messages().get("admin.rarities")));
             on(48, clk -> rename(clk.player()))
                     .set(48, button(Material.NAME_TAG, services.messages().get("admin.rename")));
-            on(49, clk -> new IconPickerGui(services, box).open(clk.player()))
+            on(49, clk -> new IconPickerGui(services).open(clk.player(), box))
                     .set(49, button(Material.ITEM_FRAME, services.messages().get("admin.icon")));
             on(50, clk -> penalty(clk.player()))
                     .set(50, button(Material.BLAZE_POWDER, services.messages().get("admin.penalty")));

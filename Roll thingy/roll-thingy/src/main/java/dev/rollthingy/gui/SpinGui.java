@@ -4,7 +4,6 @@ import dev.rollthingy.RollService;
 import dev.rollthingy.RollServices;
 import dev.rollthingy.core.box.Box;
 import dev.rollthingy.core.gui.DepositGui;
-import dev.rollthingy.core.misc.ItemBundleCodec;
 import dev.rollthingy.core.msg.SoundRegistry;
 import dev.rollthingy.roll.SpinAnimation;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -87,7 +86,7 @@ public class SpinGui {
                 return;
             }
             services.sounds().play(player, SoundRegistry.Event.SPIN);
-            List<ItemStack> strip = buildStrip(box, result.winnerItem());
+            List<ItemStack> strip = buildStrip(services, box, result.winnerItem());
             player.closeInventory();
             new SpinAnimation(services, player, strip, () -> finish(player, result)).run();
         }
@@ -125,14 +124,12 @@ public class SpinGui {
         }
     }
 
-    static List<ItemStack> buildStrip(Box box, ItemStack winner) {
+    static List<ItemStack> buildStrip(RollServices services, Box box, ItemStack winner) {
         List<ItemStack> pool = new ArrayList<>();
         for (var tier : box.tiers()) {
             for (var tierItem : tier.items()) {
-                try {
-                    List<ItemStack> decoded = ItemBundleCodec.decode(tierItem.data());
-                    if (!decoded.isEmpty()) pool.add(decoded.get(0).clone());
-                } catch (IllegalArgumentException ignored) {}
+                ItemStack icon = services.cache().item(tierItem.data());
+                if (icon.getType() != Material.AIR) pool.add(icon);
             }
         }
         if (pool.isEmpty()) pool.add(new ItemStack(Material.STONE, 1));

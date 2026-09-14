@@ -67,8 +67,7 @@ public class RollService {
         // The Box preserves the original data strings; index into the box tiers.
         RarityTier boxTier = box.tiers().get(outcome.tierIndex());
         BoxItem item = boxTier.items().get(outcome.itemIndex());
-        List<ItemStack> decoded = ItemBundleCodec.decode(item.data());
-        return decoded.isEmpty() ? null : decoded.get(0);
+        return cache.itemOrNull(item.data());
     }
 
     public void award(Player player, Box box, SpinResult result) {
@@ -85,12 +84,32 @@ public class RollService {
         Map<String, Integer> strictCounts = new HashMap<>();
         Map<String, Integer> looseCounts = new HashMap<>();
         Map<String, Integer> wrongCounts = new HashMap<>();
-        for (PaymentRequirement req : box.payment()) {
+        List<PaymentRequirement> reqs = box.payment();
+        // Decode each requirement's spec once (Java serialization is expensive).
+        Map<String, List<Map<String, Object>>> specs = new HashMap<>();
+        for (PaymentRequirement req : reqs) {
+            specs.put(req.data(), safeDecode(req.data()));
+        }
+        // Pre-deserialize strict templates once so the match loop never rebuilds them.
+        Map<String, ItemStack> strictTemplates = new HashMap<>();
+        for (PaymentRequirement req : reqs) {
+            if (req.strict()) {
+                List<Map<String, Object>> maps = specs.get(req.data());
+                if (!maps.isEmpty()) strictTemplates.put(req.data(), ItemStack.deserialize(maps.get(0)));
+            }
+        }
+        Map<String, String> looseMaterials = new HashMap<>();
+        for (PaymentRequirement req : reqs) {
             if (req.strict()) continue;
+            List<Map<String, Object>> maps = specs.get(req.data());
+            if (!maps.isEmpty()) looseMaterials.put(req.data(), String.valueOf(maps.get(0).get("type")));
+        }
+        // Loose contributions: an item can satisfy every loose requirement of its material.
+        for (PaymentRequirement req : reqs) {
+            if (req.strict()) continue;
+            String material = looseMaterials.get(req.data());
+            if (material == null) continue;
             for (ItemStack item : deposit) {
-                List<Map<String, Object>> maps = safeDecode(req.data());
-                if (maps.isEmpty()) continue;
-                String material = String.valueOf(maps.get(0).get("type"));
                 if (item != null && item.getType().name().equals(material)) {
                     looseCounts.merge(req.data(), 1, Integer::sum);
                 }
@@ -99,25 +118,23 @@ public class RollService {
         for (ItemStack item : deposit) {
             if (item == null) continue;
             boolean matched = false;
-            for (PaymentRequirement req : box.payment()) {
+            for (PaymentRequirement req : reqs) {
                 if (req.strict()) {
-                    List<Map<String, Object>> maps = safeDecode(req.data());
-                    if (!maps.isEmpty() && sameItem(item, maps.get(0))) {
+                    ItemStack template = strictTemplates.get(req.data());
+                    if (template != null && item.isSimilar(template)) {
                         strictCounts.merge(req.data(), 1, Integer::sum);
                         matched = true;
                         break;
                     }
                 } else {
-                    List<Map<String, Object>> maps = safeDecode(req.data());
-                    if (!maps.isEmpty() && item.getType().name().equals(String.valueOf(maps.get(0).get("type")))) {
+                    String material = looseMaterials.get(req.data());
+                    if (material != null && item.getType().name().equals(material)) {
                         matched = true;
                         break;
                     }
                 }
             }
-            if (!matched) {
-                wrongCounts.merge(item.getType().name(), 1, Integer::sum);
-            }
+            if (!matched) wrongCounts.merge(item.getType().name(), 1, Integer::sum);
         }
         return PenaltyMath.contributedScore(box.payment(), strictCounts, looseCounts, box.penalty().looseValue(), wrongCounts);
     }
@@ -128,13 +145,6 @@ public class RollService {
         } catch (IllegalArgumentException e) {
             return List.of();
         }
-    }
-
-    private static boolean sameItem(ItemStack item, Map<String, Object> spec) {
-        String type = String.valueOf(spec.get("type"));
-        if (!item.getType().name().equals(type)) return false;
-        ItemStack template = ItemStack.deserialize(spec);
-        return item.isSimilar(template);
     }
 
     static double requiredAmount(Box box) {
