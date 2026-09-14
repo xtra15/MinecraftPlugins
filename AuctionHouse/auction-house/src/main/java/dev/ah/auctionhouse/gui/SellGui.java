@@ -20,7 +20,7 @@ public class SellGui {
 
     public void open(Player player) {
         DepositGui gui = new DepositGui(5, services.messages().get("sell.title"), 9, 17);
-        gui.fillRect(36, 44, services.fillerItem());
+        gui.fill(services.fillerItem());
         gui.fillRect(9, 17, null);
         gui.on(0, clk -> { gui.cancelAndReturn(player); new AhMainGui(services).open(player); })
                 .set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));

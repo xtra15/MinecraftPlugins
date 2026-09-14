@@ -28,7 +28,14 @@ public class GuiManager {
         Inventory inv = event.getClickedInventory();
         if (inv == null) return;
         ChestGui gui = ChestGui.of(inv);
-        if (gui == null) return;
+        if (gui == null) {
+            Inventory top = event.getView().getTopInventory();
+            ChestGui topGui = top == null ? null : ChestGui.of(top);
+            if (event.isShiftClick() && topGui != null && !(topGui instanceof DepositGui)) {
+                event.setCancelled(true);
+            }
+            return;
+        }
         int slot = event.getSlot();
         if (gui instanceof DepositGui deposit && deposit.isDepositSlot(slot)) {
             return;
