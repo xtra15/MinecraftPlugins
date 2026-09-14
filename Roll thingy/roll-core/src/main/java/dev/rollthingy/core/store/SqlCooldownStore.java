@@ -34,6 +34,24 @@ public class SqlCooldownStore implements CooldownStore {
         });
     }
 
+    @Override
+    public long lastSpinAt(UUID player, String boxId) {
+        return db.transact(c -> {
+            long last = -1;
+            try (PreparedStatement ps = c.prepareStatement(
+                    "SELECT last_spin_at FROM cooldowns WHERE player_uuid = ? AND box_id = ?")) {
+                ps.setString(1, player.toString());
+                ps.setString(2, boxId);
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) last = rs.getLong(1);
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+            return last;
+        });
+    }
+
     private void upsert(UUID player, String boxId, long now) {
         db.transact(c -> {
             try (PreparedStatement ps = c.prepareStatement("""
