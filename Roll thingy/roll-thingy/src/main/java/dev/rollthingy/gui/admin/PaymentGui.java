@@ -61,11 +61,9 @@ public class PaymentGui {
                 new EditGui(services).open(clk.player(), box);
             }).set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
 
-            on(48, clk -> toggleStrict()).set(48, button(Material.ARROW, strictLabel()));
-            on(45, clk -> save(clk.player())).set(45, button(Material.EMERALD,
-                    services.messages().get("admin.payment-save")));
+            on(45, clk -> toggleStrict()).set(45, toggleButton());
             on(53, clk -> save(clk.player())).set(53, button(Material.EMERALD,
-                    services.messages().get("admin.confirm")));
+                    services.messages().get("admin.payment-save")));
 
             drawCurrent();
         }
@@ -112,18 +110,27 @@ public class PaymentGui {
         private void toggleStrict() {
             strict = !strict;
             if (inventory() == null) return;
-            ItemStack toggle = inventory().getItem(48);
-            if (toggle == null) return;
-            toggle.editMeta(meta -> meta.displayName(MM.deserialize(strictLabel())));
-            inventory().setItem(48, toggle);
+            inventory().setItem(45, toggleButton());
+        }
+
+        private ItemStack toggleButton() {
+            ItemStack toggle = new ItemStack(Material.ARROW, 1);
+            toggle.editMeta(meta -> {
+                meta.displayName(MM.deserialize(strictLabel()));
+                meta.lore(List.of(MM.deserialize(services.messages().get("admin.toggle-hint"))));
+            });
+            return toggle;
         }
 
         private void save(Player admin) {
             List<ItemStack> items = collect();
             Map<String, Integer> counts = new LinkedHashMap<>();
+            Map<String, String> specs = new LinkedHashMap<>();
             for (ItemStack item : items) {
                 String data = ItemBundleCodec.encode(List.of(item.clone()));
-                counts.merge(data, 1, Integer::sum);
+                String key = strict ? data : item.getType().name();
+                counts.merge(key, 1, Integer::sum);
+                specs.putIfAbsent(key, data);
             }
             if (counts.isEmpty()) {
                 admin.sendMessage(MM.deserialize(services.messages().get("spin.no-payment")));
@@ -132,7 +139,7 @@ public class PaymentGui {
             }
             List<PaymentRequirement> payment = new ArrayList<>();
             for (Map.Entry<String, Integer> e : counts.entrySet()) {
-                payment.add(new PaymentRequirement(e.getKey(), e.getValue(), strict));
+                payment.add(new PaymentRequirement(specs.get(e.getKey()), e.getValue(), strict));
             }
             Box updated = new Box(box.id(), box.name(), box.icon(), payment, box.penalty(),
                     box.cooldownSeconds(), box.zonk(), box.tiers());
@@ -157,9 +164,7 @@ public class PaymentGui {
         }
 
         private String strictLabel() {
-            return strict
-                    ? services.messages().get("admin.toggle-strict", Map.of("strict", "true"))
-                    : services.messages().get("admin.toggle-loose", Map.of("strict", "false"));
+            return services.messages().get(strict ? "admin.toggle-strict" : "admin.toggle-loose");
         }
 
         private ItemStack button(Material material, String text) {

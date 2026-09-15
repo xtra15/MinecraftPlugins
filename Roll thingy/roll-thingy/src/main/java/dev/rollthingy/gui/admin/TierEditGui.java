@@ -40,7 +40,7 @@ public class TierEditGui {
         private final int tierIndex;
 
         StemDrop(RollServices services, Box box, int tierIndex) {
-            super(6, services.messages().get("admin.rarity.add"), 9, 17);
+            super(6, services.messages().get("admin.rarity.add-item"), 9, 17);
             this.services = services;
             this.box = box;
             this.tierIndex = tierIndex;
@@ -146,7 +146,7 @@ public class TierEditGui {
             ItemStack icon = services.cache().item(item.data());
             final int itemIndex = i;
             icon.editMeta(meta -> meta.lore(List.of(MM.deserialize("weight <white>" + item.weight()))));
-            gui.on(slot, clk -> setItemWeight(admin, box, tierIndex, itemIndex));
+            gui.on(slot, clk -> openItem(admin, box, tierIndex, itemIndex));
             gui.set(slot, icon);
             slot++;
         }
@@ -154,9 +154,9 @@ public class TierEditGui {
         gui.on(45, clk -> setTierWeight(admin, box, tierIndex)).set(45, button(Material.NAME_TAG,
                 services.messages().get("admin.rarity.weight")));
         gui.on(47, clk -> openDrop(clk.player(), box, tierIndex)).set(47, button(Material.HOPPER,
-                services.messages().get("admin.rarity.add")));
-        gui.on(49, clk -> deleteItem(admin, box, tierIndex)).set(49, button(Material.BARRIER,
-                services.messages().get("admin.delete")));
+                services.messages().get("admin.rarity.add-item")));
+        gui.on(49, clk -> deleteTier(admin, box, tierIndex)).set(49, button(Material.BARRIER,
+                services.messages().get("admin.rarity.delete-tier")));
         services.sounds().play(admin, SoundRegistry.Event.OPEN);
         gui.open(admin);
     }
@@ -172,8 +172,8 @@ public class TierEditGui {
         return how;
     }
 
-    private void deleteItem(Player admin, Box box, int tierIndex) {
-        new ConfirmGui(services).open(admin, services.messages().get("admin.delete"), () -> {
+    private void deleteTier(Player admin, Box box, int tierIndex) {
+        new ConfirmGui(services).open(admin, services.messages().get("admin.rarity.delete-tier"), () -> {
             RarityTier tier = box.tiers().get(tierIndex);
             List<RarityTier> tiers = new ArrayList<>(box.tiers());
             tiers.remove(tierIndex);
@@ -181,7 +181,44 @@ public class TierEditGui {
                     box.cooldownSeconds(), box.zonk(), tiers);
             services.cache().addOrUpdate(updated);
             admin.sendMessage(MM.deserialize(services.messages().get("admin.deleted")));
-            open(admin, updated, 0);
+            new RarityGui(services).open(admin, updated, Integer.MAX_VALUE);
+        });
+    }
+
+    private void openItem(Player admin, Box box, int tierIndex, int itemIndex) {
+        if (tierIndex >= box.tiers().size()) return;
+        RarityTier tier = box.tiers().get(tierIndex);
+        if (itemIndex >= tier.items().size()) return;
+        BoxItem item = tier.items().get(itemIndex);
+        ChestGui gui = new ChestGui(3, services.messages().get("admin.rarity.item-title"));
+        gui.fill(services.config().fillerItem());
+        gui.on(0, clk -> open(clk.player(), box, tierIndex))
+                .set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
+        ItemStack icon = services.cache().item(item.data());
+        icon.editMeta(meta -> meta.lore(List.of(MM.deserialize(services.messages().get("admin.rarity.item-weight")
+                + " <white>" + fmt(item.weight())))));
+        gui.set(4, icon);
+        gui.on(11, clk -> setItemWeight(admin, box, tierIndex, itemIndex))
+                .set(11, button(Material.NAME_TAG, services.messages().get("admin.rarity.edit-weight")));
+        gui.on(15, clk -> removeItem(admin, box, tierIndex, itemIndex))
+                .set(15, button(Material.BARRIER, services.messages().get("admin.rarity.remove-item")));
+        services.sounds().play(admin, SoundRegistry.Event.OPEN);
+        gui.open(admin);
+    }
+
+    private void removeItem(Player admin, Box box, int tierIndex, int itemIndex) {
+        new ConfirmGui(services).open(admin, services.messages().get("admin.rarity.remove-item"), () -> {
+            RarityTier tier = box.tiers().get(tierIndex);
+            List<BoxItem> items = new ArrayList<>(tier.items());
+            if (itemIndex >= items.size()) return;
+            items.remove(itemIndex);
+            List<RarityTier> tiers = new ArrayList<>(box.tiers());
+            tiers.set(tierIndex, new RarityTier(tier.name(), tier.weight(), items));
+            Box updated = new Box(box.id(), box.name(), box.icon(), box.payment(), box.penalty(),
+                    box.cooldownSeconds(), box.zonk(), tiers);
+            services.cache().addOrUpdate(updated);
+            admin.sendMessage(MM.deserialize(services.messages().get("admin.saved")));
+            open(admin, updated, tierIndex);
         });
     }
 
@@ -224,7 +261,7 @@ public class TierEditGui {
                         box.cooldownSeconds(), box.zonk(), tiers);
                 services.cache().addOrUpdate(updated);
                 admin.sendMessage(MM.deserialize(services.messages().get("admin.saved")));
-                open(admin, updated, tierIndex);
+                openItem(admin, updated, tierIndex, itemIndex);
             } catch (NumberFormatException e) {
                 admin.sendMessage(MM.deserialize(services.messages().get("errors.bad-input",
                         Map.of("example", "2.5"))));
