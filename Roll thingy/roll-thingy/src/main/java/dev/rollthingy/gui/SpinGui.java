@@ -4,6 +4,7 @@ import dev.rollthingy.RollService;
 import dev.rollthingy.RollServices;
 import dev.rollthingy.core.box.Box;
 import dev.rollthingy.core.box.PaymentRequirement;
+import dev.rollthingy.core.gui.ChestGui;
 import dev.rollthingy.core.gui.DepositGui;
 import dev.rollthingy.core.msg.SoundRegistry;
 import dev.rollthingy.roll.SpinAnimation;
@@ -12,10 +13,8 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class SpinGui {
     private final RollServices services;
@@ -131,29 +130,47 @@ public class SpinGui {
 
             RollService.SpinResult result = services.roll().spin(player, box, deposit);
             if (result.winnerItem() == null) {
-                // Zonk: consume payment, no inventory animation needed.
+                // Zonk: consume payment, no reel animation needed.
                 player.closeInventory();
-                finish(player, result);
+                showResult(player, box, result);
                 return;
             }
             services.sounds().play(player, SoundRegistry.Event.SPIN);
-            List<ItemStack> strip = buildStrip(services, box, result.winnerItem());
+            List<ItemStack> reel = SpinAnimation.buildReel(services, box, result.winnerItem());
             player.closeInventory();
-            new SpinAnimation(services, player, strip, () -> finish(player, result)).run();
+            new SpinAnimation(services, player, reel, () -> showResult(player, box, result)).run();
         }
 
-        private void finish(Player player, RollService.SpinResult result) {
-            if (result.outcome().tierIndex() == -1) {
-                player.sendMessage(MM.deserialize(services.messages().get("spin.zonk")));
-                services.sounds().play(player, SoundRegistry.Event.ZONK);
-                return;
+        private void showResult(Player player, Box box, RollService.SpinResult result) {
+            boolean zonk = result.outcome().tierIndex() == -1;
+            boolean rare = !zonk && result.chancePct() < 0.5;
+            String text = zonk
+                    ? services.messages().get("spin.zonk")
+                    : services.messages().get(rare ? "spin.win-rare" : "spin.win",
+                            Map.of("item", itemDisplayName(result.winnerItem())));
+
+            ChestGui gui = new ChestGui(3, services.messages().get("spin.result"));
+            gui.fill(services.config().fillerItem());
+            ItemStack prize = zonk ? new ItemStack(Material.GRAY_DYE, 1) : result.winnerItem().clone();
+            prize.editMeta(meta -> meta.lore(List.of(MM.deserialize(text))));
+            gui.set(13, prize);
+
+            long cooldown = services.roll().cooldownMillis(player, box);
+            if (cooldown <= 0) {
+                gui.on(11, clk -> new SpinGui(services).open(clk.player(), box))
+                        .set(11, button(Material.EMERALD, services.messages().get("spin.again")));
+            } else {
+                gui.set(11, button(Material.GRAY_DYE, services.messages().get("spin.cooldown-button",
+                        Map.of("seconds", String.valueOf(Math.max(1, cooldown / 1000))))));
             }
-            boolean rare = result.chancePct() < 0.5;
-            String itemName = itemDisplayName(result.winnerItem());
-            player.sendMessage(MM.deserialize(services.messages().get(rare ? "spin.win-rare" : "spin.win",
-                    Map.of("item", itemName))));
-            services.sounds().play(player, rare ? SoundRegistry.Event.WIN_RARE : SoundRegistry.Event.WIN);
-            services.roll().award(player, box, result);
+            gui.on(15, clk -> new BoxDetailGui(services).open(clk.player(), box))
+                    .set(15, button(Material.SPECTRAL_ARROW, "<gray>Back"));
+
+            player.sendMessage(MM.deserialize(text));
+            services.sounds().play(player,
+                    zonk ? SoundRegistry.Event.ZONK : (rare ? SoundRegistry.Event.WIN_RARE : SoundRegistry.Event.WIN));
+            if (!zonk) services.roll().award(player, box, result);
+            gui.open(player);
         }
 
         private String itemDisplayName(ItemStack item) {
@@ -173,22 +190,5 @@ public class SpinGui {
             item.editMeta(meta -> meta.displayName(MM.deserialize(text)));
             return item;
         }
-    }
-
-    static List<ItemStack> buildStrip(RollServices services, Box box, ItemStack winner) {
-        List<ItemStack> pool = new ArrayList<>();
-        for (var tier : box.tiers()) {
-            for (var tierItem : tier.items()) {
-                ItemStack icon = services.cache().item(tierItem.data());
-                if (icon.getType() != Material.AIR) pool.add(icon);
-            }
-        }
-        if (pool.isEmpty()) pool.add(new ItemStack(Material.STONE, 1));
-        Random rng = new Random();
-        List<ItemStack> strip = new ArrayList<>();
-        int len = 11;
-        for (int i = 0; i < len; i++) strip.add(pool.get(rng.nextInt(pool.size())).clone());
-        if (winner != null) strip.set(len / 2, winner.clone());
-        return strip;
     }
 }

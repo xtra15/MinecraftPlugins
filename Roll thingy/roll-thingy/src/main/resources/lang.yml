@@ -35,6 +35,9 @@ spin:
   zonk: "<red>Zonk! Better luck next time!"
   win: "<green>You won <item>!"
   win-rare: "<yellow><bold>You won a rare item: <item>!"
+  result: "<gold>Result"
+  again: "<green>Spin again"
+  cooldown-button: "<red>On cooldown <seconds>s"
 claim:
   title: "<gold>Your prizes <gray>-<white> page <page>/<pages>"
   empty: "<gray>No prizes waiting. Spin to win!"
