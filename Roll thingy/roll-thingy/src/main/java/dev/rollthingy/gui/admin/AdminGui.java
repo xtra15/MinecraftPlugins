@@ -70,12 +70,13 @@ public class AdminGui {
     }
 
     private void create(Player admin) {
-        admin.sendMessage(MM.deserialize(services.messages().get("admin.name-prompt")));
+        admin.sendMessage(MM.deserialize(services.messages().get("admin.name-prompt", Map.of("name", ""))));
         services.sounds().play(admin, SoundRegistry.Event.CLICK);
         dev.rollthingy.listener.ChatPrompt.prompt(admin, name -> {
             String clean = name.trim();
             if (clean.isEmpty()) {
-                admin.sendMessage(MM.deserialize(services.messages().get("errors.unknown")));
+                admin.sendMessage(MM.deserialize(services.messages().get("errors.bad-input",
+                        Map.of("example", "my-box"))));
                 return;
             }
             String id = clean.toLowerCase().replaceAll("[^a-z0-9-]", "-");

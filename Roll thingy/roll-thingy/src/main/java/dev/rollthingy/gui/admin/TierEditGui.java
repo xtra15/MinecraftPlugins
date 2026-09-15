@@ -51,9 +51,43 @@ public class TierEditGui {
             fill(services.config().fillerItem());
             fillRect(9, 17, null);
             fillRect(45, 53, new ItemStack(Material.GRAY_STAINED_GLASS_PANE, 1));
+            set(8, bracket());
+            set(18, bracket());
+            set(4, howTo());
             on(0, clk -> new RarityGui(services).open(clk.player(), box, Integer.MAX_VALUE))
                     .set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
-            on(40, clk -> collectDrop(clk.player())).set(40, button(Material.EMERALD, services.messages().get("admin.confirm")));
+            on(53, clk -> collectDrop(clk.player())).set(53, button(Material.EMERALD, services.messages().get("admin.confirm")));
+            drawCurrent();
+        }
+
+        private void drawCurrent() {
+            if (tierIndex >= box.tiers().size()) return;
+            RarityTier tier = box.tiers().get(tierIndex);
+            int slot = 19;
+            for (int i = 0; i < tier.items().size() && slot <= 26; i++) {
+                BoxItem item = tier.items().get(i);
+                ItemStack icon = services.cache().item(item.data());
+                icon.editMeta(meta -> meta.lore(List.of(MM.deserialize("weight <white>" + item.weight()))));
+                set(slot, icon);
+                slot++;
+            }
+        }
+
+        private ItemStack howTo() {
+            ItemStack how = new ItemStack(Material.BOOK, 1);
+            how.editMeta(meta -> {
+                meta.displayName(MM.deserialize(services.messages().get("drop.banner")));
+                meta.lore(List.of(
+                        MM.deserialize(services.messages().get("drop.step-price")),
+                        MM.deserialize(services.messages().get("drop.step-confirm"))));
+            });
+            return how;
+        }
+
+        private ItemStack bracket() {
+            ItemStack bracket = new ItemStack(Material.LIME_STAINED_GLASS_PANE, 1);
+            bracket.editMeta(meta -> meta.displayName(MM.deserialize(services.messages().get("drop.zone-bracket"))));
+            return bracket;
         }
 
         private void collectDrop(Player admin) {
@@ -104,6 +138,7 @@ public class TierEditGui {
         gui.fillRect(9, 44, null);
         gui.on(0, clk -> new RarityGui(services).open(clk.player(), box, Integer.MAX_VALUE))
                 .set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
+        gui.set(4, howTo());
 
         int slot = 9;
         for (int i = 0; i < tier.items().size() && slot <= 44; i++) {
@@ -126,6 +161,17 @@ public class TierEditGui {
         gui.open(admin);
     }
 
+    private ItemStack howTo() {
+        ItemStack how = new ItemStack(Material.BOOK, 1);
+        how.editMeta(meta -> {
+            meta.displayName(MM.deserialize(services.messages().get("drop.banner")));
+            meta.lore(List.of(
+                    MM.deserialize(services.messages().get("drop.step-price")),
+                    MM.deserialize(services.messages().get("drop.step-confirm"))));
+        });
+        return how;
+    }
+
     private void deleteItem(Player admin, Box box, int tierIndex) {
         new ConfirmGui(services).open(admin, services.messages().get("admin.delete"), () -> {
             RarityTier tier = box.tiers().get(tierIndex);
@@ -140,33 +186,38 @@ public class TierEditGui {
     }
 
     private void setTierWeight(Player admin, Box box, int tierIndex) {
-        admin.sendMessage(MM.deserialize(services.messages().get("admin.rarity.weight")));
+        RarityTier tier = box.tiers().get(tierIndex);
+        admin.sendMessage(MM.deserialize(services.messages().get("admin.weight-prompt",
+                Map.of("weight", fmt(tier.weight())))));
         ChatPrompt.prompt(admin, input -> {
             try {
                 double w = Double.parseDouble(input.trim());
-                RarityTier tier = box.tiers().get(tierIndex);
+                RarityTier current = box.tiers().get(tierIndex);
                 List<RarityTier> tiers = new ArrayList<>(box.tiers());
-                tiers.set(tierIndex, new RarityTier(tier.name(), w, tier.items()));
+                tiers.set(tierIndex, new RarityTier(current.name(), w, current.items()));
                 Box updated = new Box(box.id(), box.name(), box.icon(), box.payment(), box.penalty(),
                         box.cooldownSeconds(), box.zonk(), tiers);
                 services.cache().addOrUpdate(updated);
                 admin.sendMessage(MM.deserialize(services.messages().get("admin.saved")));
                 open(admin, updated, tierIndex);
             } catch (NumberFormatException e) {
-                admin.sendMessage(MM.deserialize(services.messages().get("errors.unknown")));
+                admin.sendMessage(MM.deserialize(services.messages().get("errors.bad-input",
+                        Map.of("example", "2.5"))));
             }
         });
     }
 
     private void setItemWeight(Player admin, Box box, int tierIndex, int itemIndex) {
-        admin.sendMessage(MM.deserialize(services.messages().get("admin.rarity.item-weight")));
+        BoxItem old = box.tiers().get(tierIndex).items().get(itemIndex);
+        admin.sendMessage(MM.deserialize(services.messages().get("admin.item-weight-prompt",
+                Map.of("weight", fmt(old.weight())))));
         ChatPrompt.prompt(admin, input -> {
             try {
                 double w = Double.parseDouble(input.trim());
                 RarityTier tier = box.tiers().get(tierIndex);
                 List<BoxItem> items = new ArrayList<>(tier.items());
-                BoxItem old = items.get(itemIndex);
-                items.set(itemIndex, new BoxItem(old.data(), w));
+                BoxItem current = items.get(itemIndex);
+                items.set(itemIndex, new BoxItem(current.data(), w));
                 List<RarityTier> tiers = new ArrayList<>(box.tiers());
                 tiers.set(tierIndex, new RarityTier(tier.name(), tier.weight(), items));
                 Box updated = new Box(box.id(), box.name(), box.icon(), box.payment(), box.penalty(),
@@ -175,9 +226,15 @@ public class TierEditGui {
                 admin.sendMessage(MM.deserialize(services.messages().get("admin.saved")));
                 open(admin, updated, tierIndex);
             } catch (NumberFormatException e) {
-                admin.sendMessage(MM.deserialize(services.messages().get("errors.unknown")));
+                admin.sendMessage(MM.deserialize(services.messages().get("errors.bad-input",
+                        Map.of("example", "2.5"))));
             }
         });
+    }
+
+    private static String fmt(double value) {
+        if (value == Math.floor(value)) return String.valueOf((long) value);
+        return String.valueOf(value);
     }
 
     private ItemStack button(Material material, String text) {

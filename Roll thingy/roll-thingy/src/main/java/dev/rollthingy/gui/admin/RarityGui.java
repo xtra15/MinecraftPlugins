@@ -65,7 +65,7 @@ public class RarityGui {
     }
 
     private void addRarity(Player admin, Box box) {
-        admin.sendMessage(MM.deserialize(services.messages().get("admin.name-prompt")));
+        admin.sendMessage(MM.deserialize(services.messages().get("admin.name-prompt", Map.of("name", ""))));
         services.sounds().play(admin, SoundRegistry.Event.CLICK);
         ChatPrompt.prompt(admin, name -> {
             String clean = name.trim();
@@ -76,6 +76,9 @@ public class RarityGui {
                     box.cooldownSeconds(), box.zonk(), tiers);
             services.cache().addOrUpdate(updated);
             admin.sendMessage(MM.deserialize(services.messages().get("admin.saved")));
+            String example = "2.5";
+            admin.sendMessage(MM.deserialize(services.messages().get("admin.weight-prompt",
+                    Map.of("weight", "1.0"))));
             ChatPrompt.prompt(admin, weight -> {
                 try {
                     double w = Double.parseDouble(weight.trim());
@@ -87,7 +90,8 @@ public class RarityGui {
                     admin.sendMessage(MM.deserialize(services.messages().get("admin.saved")));
                     open(admin, finalBox, Integer.MAX_VALUE);
                 } catch (NumberFormatException e) {
-                    admin.sendMessage(MM.deserialize(services.messages().get("errors.unknown")));
+                    admin.sendMessage(MM.deserialize(services.messages().get("errors.bad-input",
+                            Map.of("example", "2.5"))));
                 }
             });
         });

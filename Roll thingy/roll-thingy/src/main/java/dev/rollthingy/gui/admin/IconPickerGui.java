@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
+import java.util.Map;
 
 public class IconPickerGui {
     private final RollServices services;
@@ -28,7 +29,10 @@ public class IconPickerGui {
         gui.open(admin);
     }
 
-    /** DepositGui-based picker: top row (slots 0-8) accepts the icon item; confirm at 22. */
+    /**
+     * DepositGui-based picker: top row (slots 0-8) accepts the icon item; current icon preview at
+     * 13; confirm at 26, cancel at 18.
+     */
     private static final class StemGui extends DepositGui {
         private final RollServices services;
         private final Box box;
@@ -44,15 +48,50 @@ public class IconPickerGui {
             fill(services.config().fillerItem());
             fillRect(0, 8, null);
 
+            set(9, bracket());
+            set(17, bracket());
+            set(10, howTo());
+
             ItemStack current = services.cache().icon(box);
-            current.editMeta(meta -> meta.lore(List.of(MM.deserialize(services.messages().get("admin.icon-prompt")))));
+            String material = iconMaterial(box);
+            current.editMeta(meta -> {
+                meta.displayName(MM.deserialize(services.messages().get("admin.icon-current",
+                        Map.of("material", material))));
+                meta.lore(List.of(
+                        MM.deserialize(services.messages().get("admin.icon-prompt")),
+                        MM.deserialize("<gray>Drop a replacement in the <green>green row")));
+            });
             set(13, current);
 
-            on(16, clk -> {
+            on(18, clk -> {
                 cancelAndReturn(clk.player());
                 new EditGui(services).open(clk.player(), box);
-            }).set(16, button(Material.BARRIER, services.messages().get("admin.cancel")));
-            on(22, clk -> apply(clk.player())).set(22, button(Material.EMERALD, services.messages().get("admin.confirm")));
+            }).set(18, button(Material.BARRIER, services.messages().get("admin.cancel")));
+            on(26, clk -> apply(clk.player())).set(26, button(Material.EMERALD, services.messages().get("admin.confirm")));
+        }
+
+        private static String iconMaterial(Box box) {
+            if (box.icon() != null && box.icon().material() != null && !box.icon().material().isBlank()) {
+                return box.icon().material().toLowerCase().replace('_', ' ');
+            }
+            return "chest";
+        }
+
+        private ItemStack howTo() {
+            ItemStack how = new ItemStack(Material.BOOK, 1);
+            how.editMeta(meta -> {
+                meta.displayName(MM.deserialize(services.messages().get("drop.banner")));
+                meta.lore(List.of(
+                        MM.deserialize(services.messages().get("drop.step-price")),
+                        MM.deserialize(services.messages().get("drop.step-confirm"))));
+            });
+            return how;
+        }
+
+        private ItemStack bracket() {
+            ItemStack bracket = new ItemStack(Material.LIME_STAINED_GLASS_PANE, 1);
+            bracket.editMeta(meta -> meta.displayName(MM.deserialize(services.messages().get("drop.zone-bracket"))));
+            return bracket;
         }
 
         private void apply(Player admin) {

@@ -3,6 +3,7 @@ package dev.rollthingy.gui;
 import dev.rollthingy.RollService;
 import dev.rollthingy.RollServices;
 import dev.rollthingy.core.box.Box;
+import dev.rollthingy.core.box.PaymentRequirement;
 import dev.rollthingy.core.gui.DepositGui;
 import dev.rollthingy.core.msg.SoundRegistry;
 import dev.rollthingy.roll.SpinAnimation;
@@ -57,6 +58,56 @@ public class SpinGui {
                 new BoxDetailGui(services).open(clk.player(), box);
             }).set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
             on(49, clk -> start(clk.player())).set(49, button(Material.EMERALD, services.messages().get("spin.button")));
+
+            set(8, bracket());
+            set(18, bracket());
+            set(4, boxIcon());
+            drawRequirements();
+        }
+
+        private ItemStack boxIcon() {
+            ItemStack icon = services.cache().icon(box);
+            icon.editMeta(meta -> meta.lore(List.of(
+                    MM.deserialize(services.messages().get("drop.hint-spin")),
+                    MM.deserialize("<gray>Payment: " + summary()))));
+            return icon;
+        }
+
+        private void drawRequirements() {
+            List<PaymentRequirement> payment = box.payment();
+            if (payment.isEmpty()) {
+                ItemStack free = button(Material.PAPER, services.messages().get("spin.required-free"));
+                set(22, free);
+                return;
+            }
+            int slot = 19;
+            for (int i = 0; i < payment.size() && slot <= 26; i++) {
+                PaymentRequirement req = payment.get(i);
+                ItemStack icon = services.cache().item(req.data());
+                String label = req.strict()
+                        ? services.messages().get("spin.required-exact", Map.of("count", String.valueOf(req.amount())))
+                        : services.messages().get("spin.required-type", Map.of("count", String.valueOf(req.amount())));
+                icon.editMeta(meta -> meta.lore(List.of(MM.deserialize(label))));
+                set(slot, icon);
+                slot++;
+            }
+            if (payment.size() > 8) {
+                ItemStack more = button(Material.PAPER, "<gray>+" + (payment.size() - 8) + " more");
+                set(26, more);
+            }
+        }
+
+        private String summary() {
+            List<PaymentRequirement> payment = box.payment();
+            if (payment.isEmpty()) return "free";
+            int total = payment.stream().mapToInt(PaymentRequirement::amount).sum();
+            return total + " item" + (total == 1 ? "" : "s");
+        }
+
+        private ItemStack bracket() {
+            ItemStack bracket = new ItemStack(Material.LIME_STAINED_GLASS_PANE, 1);
+            bracket.editMeta(meta -> meta.displayName(MM.deserialize(services.messages().get("drop.zone-bracket"))));
+            return bracket;
         }
 
         private void start(Player player) {
