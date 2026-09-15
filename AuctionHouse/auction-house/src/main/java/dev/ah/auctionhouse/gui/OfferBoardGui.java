@@ -41,7 +41,7 @@ public class OfferBoardGui {
         gui.on(0, this::back).set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
 
         List<ItemStack> auctioned = ItemBundleCodec.decode(listing.itemData());
-        for (int i = 0; i < Math.min(auctioned.size(), 5); i++) {
+        for (int i = 0; i < Math.min(auctioned.size(), 9); i++) {
             gui.set(9 + i, IconUtil.clean(auctioned.get(i)));
         }
 

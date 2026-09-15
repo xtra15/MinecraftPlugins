@@ -11,6 +11,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import java.util.List;
+import java.util.Map;
 
 public class OfferGui {
     private final AhServices services;
@@ -35,7 +36,14 @@ public class OfferGui {
         gui.on(0, clk -> { gui.cancelAndReturn(player); new AhMainGui(services).open(player); })
                 .set(0, GuiItems.button(services, Material.SPECTRAL_ARROW, "gui.buttons.back"));
         List<ItemStack> preview = ItemBundleCodec.decode(listing.itemData());
-        if (!preview.isEmpty()) gui.set(4, IconUtil.clean(preview.get(0)));
+        if (!preview.isEmpty()) {
+            ItemStack pv = IconUtil.clean(preview.get(0));
+            long total = IconUtil.totalAmount(preview);
+            pv.setAmount((int) total);
+            pv.editMeta(meta -> meta.lore(List.of(MM.deserialize(services.messages().get("listings.lore.amount",
+                    Map.of("total", String.valueOf(total), "count", String.valueOf(preview.size())))))));
+            gui.set(4, pv);
+        }
         gui.on(39, () -> onConfirm(player, gui)).set(39, GuiItems.button(services, Material.LIME_DYE, "gui.buttons.confirm"));
         gui.on(41, () -> gui.cancelAndReturn(player)).set(41, GuiItems.button(services, Material.BARRIER, "gui.buttons.cancel"));
         services.gui().registerOpen(player, gui);

@@ -113,10 +113,13 @@ public class AdminGui {
             if (cached == null) { slot++; continue; }
             ItemStack icon = cached.cloneItem();
             long offers = pendingOffers.getOrDefault(l.id(), 0L);
-            icon.editMeta(m -> m.lore(List.of(MM.deserialize(services.messages().get("admin.user.listing", Map.of(
-                    "id", String.valueOf(l.id()),
-                    "status", l.status(),
-                    "offers", String.valueOf(offers)))))));
+            icon.editMeta(m -> m.lore(List.of(
+                    MM.deserialize(services.messages().get("admin.user.listing", Map.of(
+                            "id", String.valueOf(l.id()),
+                            "status", l.status(),
+                            "offers", String.valueOf(offers)))),
+                    MM.deserialize(services.messages().get("listings.lore.amount",
+                            Map.of("total", String.valueOf(cached.total()), "count", String.valueOf(cached.count())))))));
             long listingId = l.id();
             gui.on(slot, clk -> new OfferBoardGui(services, listingId, admin).open());
             gui.set(slot, icon);

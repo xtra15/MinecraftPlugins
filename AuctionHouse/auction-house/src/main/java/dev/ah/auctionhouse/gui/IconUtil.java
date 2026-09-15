@@ -22,6 +22,14 @@ final class IconUtil {
         return icon;
     }
 
+    static long totalAmount(List<ItemStack> items) {
+        long total = 0;
+        for (ItemStack item : items) {
+            if (item != null) total += item.getAmount();
+        }
+        return total;
+    }
+
     static String humanize(long millis) {
         long totalMinutes = millis / 60000;
         if (totalMinutes <= 0) return "under a minute";

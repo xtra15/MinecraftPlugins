@@ -16,18 +16,26 @@ final class ItemCache {
     static final class CachedIcon {
         private final ItemStack icon;
         private final int count;
+        private final long total;
 
-        CachedIcon(ItemStack icon, int count) {
+        CachedIcon(ItemStack icon, int count, long total) {
             this.icon = icon;
             this.count = count;
+            this.total = total;
         }
 
         ItemStack cloneItem() {
-            return icon.clone();
+            ItemStack clone = icon.clone();
+            clone.setAmount((int) total);
+            return clone;
         }
 
         int count() {
             return count;
+        }
+
+        long total() {
+            return total;
         }
     }
 
@@ -37,7 +45,8 @@ final class ItemCache {
             if (cached != null) return cached;
             List<ItemStack> items = ItemBundleCodec.decode(itemData);
             if (items.isEmpty()) return null;
-            CachedIcon entry = new CachedIcon(IconUtil.clean(items.get(0)), items.size());
+            CachedIcon entry = new CachedIcon(IconUtil.clean(items.get(0)), items.size(),
+                    IconUtil.totalAmount(items));
             if (ICONS.size() >= MAX_ICONS) {
                 Iterator<Map.Entry<String, CachedIcon>> it = ICONS.entrySet().iterator();
                 it.next();

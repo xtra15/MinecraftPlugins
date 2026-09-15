@@ -10,6 +10,7 @@ import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -90,11 +91,15 @@ public class AhMainGui {
             String price = services.isEconomyEnabled() && listing.price() != null
                     ? String.valueOf(listing.price()) : "—";
             String remaining = IconUtil.humanize(listing.expiresAt() - System.currentTimeMillis());
-            List<Component> lore = List.of(
-                    MM.deserialize(services.messages().get("listings.lore.price", Map.of("price", price))),
-                    MM.deserialize(services.messages().get("listings.lore.offers", Map.of("count", String.valueOf(offers)))),
-                    MM.deserialize(services.messages().get("listings.lore.remaining",
-                            Map.of("time", remaining, "minutes", remaining, "days", remaining))));
+            List<Component> lore = new ArrayList<>();
+            lore.add(MM.deserialize(services.messages().get("listings.lore.price", Map.of("price", price))));
+            lore.add(MM.deserialize(services.messages().get("listings.lore.offers", Map.of("count", String.valueOf(offers)))));
+            lore.add(MM.deserialize(services.messages().get("listings.lore.remaining",
+                    Map.of("time", remaining, "minutes", remaining, "days", remaining))));
+            if (cached.count() > 1) {
+                lore.add(MM.deserialize(services.messages().get("listings.lore.amount",
+                        Map.of("total", String.valueOf(cached.total()), "count", String.valueOf(cached.count())))));
+            }
             icon.editMeta(meta -> meta.lore(lore));
             long listingId = listing.id();
             gui.on(slot, clk -> { clk.player().closeInventory(); new OfferGui(services, listingId).open(clk.player()); });

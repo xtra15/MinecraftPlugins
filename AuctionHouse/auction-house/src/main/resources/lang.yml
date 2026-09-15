@@ -16,6 +16,7 @@ listings:
   lore:
     price: "<gray>BIN: <white><price>"
     offers: "<gray>Offers: <white><count>"
+    amount: "<gray>Amount: <white><total> <gray>(<count> stacks)"
     remaining: "<gray>Expires in: <white><time>"
 offers:
   made: "<green>Offer sent."
