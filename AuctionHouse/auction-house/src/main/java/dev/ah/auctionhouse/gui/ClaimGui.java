@@ -100,10 +100,26 @@ public class ClaimGui {
             services.sounds().play(player, SoundRegistry.Event.ERROR);
             return;
         }
-        player.getInventory().addItem(all.toArray(new ItemStack[0]));
         long now = System.currentTimeMillis();
+        // Reserve rows first (only unclaimed rows return true), then give exactly those items.
+        List<ItemStack> reserved = new ArrayList<>();
+        boolean taken = false;
         for (ClaimRow row : rows) {
-            services.claims().markClaimed(row.id(), now);
+            if (services.claims().markClaimed(row.id(), now)) {
+                taken = true;
+                reserved.addAll(ItemBundleCodec.decode(row.itemsData()));
+            }
+        }
+        if (!taken) {
+            open(player, 0);
+            return;
+        }
+        java.util.Map<Integer, ItemStack> leftover = player.getInventory()
+                .addItem(reserved.toArray(new ItemStack[0]));
+        if (!leftover.isEmpty()) {
+            List<ItemStack> rest = new ArrayList<>(leftover.values());
+            services.claims().add(new ClaimRow(0, player.getUniqueId(),
+                    ItemBundleCodec.encode(rest), "REQUEUED", -1, now, null));
         }
         player.sendMessage(MM.deserialize(services.messages().get("claims.withdrawn")));
         services.sounds().play(player, SoundRegistry.Event.CLICK);
@@ -123,10 +139,18 @@ public class ClaimGui {
             services.sounds().play(player, SoundRegistry.Event.ERROR);
             return;
         }
-        for (ItemStack item : items) {
-            player.getInventory().addItem(item);
+        long now = System.currentTimeMillis();
+        if (!services.claims().markClaimed(rowId, now)) {
+            open(player, 0);
+            return;
         }
-        services.claims().markClaimed(rowId, System.currentTimeMillis());
+        java.util.Map<Integer, ItemStack> leftover = player.getInventory()
+                .addItem(items.toArray(new ItemStack[0]));
+        if (!leftover.isEmpty()) {
+            List<ItemStack> rest = new ArrayList<>(leftover.values());
+            services.claims().add(new ClaimRow(0, player.getUniqueId(),
+                    ItemBundleCodec.encode(rest), row.sourceType(), row.sourceId(), now, null));
+        }
         player.sendMessage(MM.deserialize(services.messages().get("claims.withdrawn")));
         services.sounds().play(player, SoundRegistry.Event.CLICK);
         open(player, 0);

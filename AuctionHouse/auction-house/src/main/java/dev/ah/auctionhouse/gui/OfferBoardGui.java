@@ -101,9 +101,14 @@ public class OfferBoardGui {
     private void decide(long offerId, boolean accept) {
         Offer offer = services.offers().byId(offerId).orElse(null);
         if (offer == null) return;
+        boolean admin = viewer.hasPermission("ah.admin");
         OfferDecisionService.Result r = accept
-                ? services.decisions().accept(viewer.getUniqueId(), offerId)
-                : services.decisions().reject(viewer.getUniqueId(), offerId);
+                ? (admin
+                        ? services.decisions().acceptAsAdmin(viewer.getUniqueId(), offerId)
+                        : services.decisions().accept(viewer.getUniqueId(), offerId))
+                : (admin
+                        ? services.decisions().rejectAsAdmin(viewer.getUniqueId(), offerId)
+                        : services.decisions().reject(viewer.getUniqueId(), offerId));
         if (r == OfferDecisionService.Result.SUCCESS) {
             viewer.sendMessage(MM.deserialize(services.messages().get(accept ? "offers.accepted-seller" : "offers.rejected-seller")));
             services.sounds().play(viewer, SoundRegistry.Event.OFFER_ACCEPTED);

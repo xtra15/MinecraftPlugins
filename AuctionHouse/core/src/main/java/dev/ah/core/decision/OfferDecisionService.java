@@ -30,21 +30,31 @@ public class OfferDecisionService {
     public enum Result { SUCCESS, NOT_FOUND, NOT_OWNER, NOT_PENDING, ERROR }
 
     public Result accept(UUID actor, long offerId) {
-        return decide(actor, offerId, true);
+        return decide(actor, offerId, true, false);
     }
 
     public Result reject(UUID actor, long offerId) {
-        return decide(actor, offerId, false);
+        return decide(actor, offerId, false, false);
     }
 
-    private Result decide(UUID actor, long offerId, boolean accept) {
+    /** Same as {@link #accept} but lets a moderator (ah.admin) decide for other sellers' listings. */
+    public Result acceptAsAdmin(UUID actor, long offerId) {
+        return decide(actor, offerId, true, true);
+    }
+
+    /** Same as {@link #reject} but lets a moderator (ah.admin) decide for other sellers' listings. */
+    public Result rejectAsAdmin(UUID actor, long offerId) {
+        return decide(actor, offerId, false, true);
+    }
+
+    private Result decide(UUID actor, long offerId, boolean accept, boolean admin) {
         return db.transact(c -> {
             Offer offer = offers.byId(offerId).orElse(null);
             if (offer == null) return Result.NOT_FOUND;
             if (!offer.isPending()) return Result.NOT_PENDING;
             Listing listing = listings.byId(offer.listingId()).orElse(null);
             if (listing == null) return Result.NOT_FOUND;
-            if (!listing.owner().equals(actor)) return Result.NOT_OWNER;
+            if (!listing.owner().equals(actor) && !admin) return Result.NOT_OWNER;
             if (accept && !listing.isActive()) return Result.NOT_PENDING;
 
             long now = System.currentTimeMillis();

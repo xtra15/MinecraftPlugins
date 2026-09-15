@@ -162,6 +162,24 @@ class OfferDecisionServiceTest {
     }
 
     @Test
+    void adminCanDecideOthersListing() {
+        Fixture f = fixture();
+        UUID seller = UUID.randomUUID();
+        UUID admin = UUID.randomUUID();
+        UUID buyer = UUID.randomUUID();
+        long listing = f.listings.create(new Listing(0, seller, "AUCTIONED", null, 0, 1, 999999, "ACTIVE"));
+        long offer = f.offers.create(new Offer(0, listing, buyer, "PAYMENT", "PENDING", 2, null));
+
+        assertEquals(OfferDecisionService.Result.SUCCESS, f.svc.acceptAsAdmin(admin, offer));
+
+        assertEquals("SOLD", f.listings.byId(listing).get().status());
+        assertEquals("PAYMENT", f.claims.unclaimedFor(seller).get(0).itemsData());
+        assertEquals("AUCTIONED", f.claims.unclaimedFor(buyer).get(0).itemsData());
+        assertEquals(OfferDecisionService.Result.NOT_PENDING, f.svc.acceptAsAdmin(admin, offer));
+        f.db.close();
+    }
+
+    @Test
     void nestedTransactionsCommitTogether() {
         Fixture f = fixture();
         UUID bob = UUID.randomUUID();

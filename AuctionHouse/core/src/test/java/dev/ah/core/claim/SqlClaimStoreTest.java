@@ -44,6 +44,21 @@ class SqlClaimStoreTest {
     }
 
     @Test
+    void markClaimedIsIdempotentAndDupeSafe() {
+        SqliteDatabase db = SqliteDatabase.inMemory();
+        db.init();
+        SqlClaimStore s = new SqlClaimStore(db);
+        UUID bob = UUID.randomUUID();
+        long id = s.add(new ClaimRow(0, bob, "ITEM1", "OFFER_REJECTED", 1, 10L, null));
+
+        assertTrue(s.markClaimed(id, 99L));
+        assertEquals(0, s.countUnclaimed(bob));
+        assertFalse(s.markClaimed(id, 100L));
+        assertEquals(99L, s.byId(id).get().claimedAt());
+        db.close();
+    }
+
+    @Test
     void unclaimedPageReturnsPagedResults() {
         SqliteDatabase db = SqliteDatabase.inMemory();
         db.init();

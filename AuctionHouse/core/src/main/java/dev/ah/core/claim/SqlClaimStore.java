@@ -121,16 +121,16 @@ public class SqlClaimStore implements ClaimStore {
     }
 
     @Override
-    public void markClaimed(long id, long claimedAt) {
-        db.transact(c -> {
-            try (PreparedStatement ps = c.prepareStatement("UPDATE claims SET claimed_at = ? WHERE id = ?")) {
+    public boolean markClaimed(long id, long claimedAt) {
+        return db.transact(c -> {
+            try (PreparedStatement ps = c.prepareStatement(
+                    "UPDATE claims SET claimed_at = ? WHERE id = ? AND claimed_at IS NULL")) {
                 ps.setLong(1, claimedAt);
                 ps.setLong(2, id);
-                ps.executeUpdate();
+                return ps.executeUpdate() > 0;
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
-            return null;
         });
     }
 
