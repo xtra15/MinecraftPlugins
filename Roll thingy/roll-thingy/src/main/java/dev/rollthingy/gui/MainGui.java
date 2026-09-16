@@ -53,6 +53,15 @@ public class MainGui {
             services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
             open(clk.player(), pageIndex + 1);
         }).set(53, arrow("gui.page-next"));
+
+        long unclaimed = services.claims().countUnclaimed(player.getUniqueId());
+        gui.on(48, clk -> new ClaimGui(services).open(clk.player(), 0)).set(48, button(Material.CHEST,
+                services.messages().get("main.prizes", Map.of("count", String.valueOf(unclaimed))),
+                List.of(MM.deserialize(services.messages().get("main.prizes-lore",
+                        Map.of("count", String.valueOf(unclaimed)))))));
+        HelpBook helpBook = new HelpBook(services);
+        gui.on(50, clk -> helpBook.open(clk.player())).set(50, helpBook.icon());
+
         services.sounds().play(player, SoundRegistry.Event.OPEN);
         gui.open(player);
     }
@@ -61,6 +70,15 @@ public class MainGui {
         ItemStack item = new ItemStack(Material.ARROW, 1);
         item.editMeta(meta -> {
             meta.displayName(MM.deserialize(services.messages().get(key)));
+        });
+        return item;
+    }
+
+    private ItemStack button(Material material, String text, List<net.kyori.adventure.text.Component> lore) {
+        ItemStack item = new ItemStack(material, 1);
+        item.editMeta(meta -> {
+            meta.displayName(MM.deserialize(text));
+            meta.lore(lore);
         });
         return item;
     }

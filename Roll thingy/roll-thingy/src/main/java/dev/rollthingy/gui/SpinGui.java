@@ -8,6 +8,7 @@ import dev.rollthingy.core.gui.ChestGui;
 import dev.rollthingy.core.gui.DepositGui;
 import dev.rollthingy.core.msg.SoundRegistry;
 import dev.rollthingy.roll.SpinAnimation;
+import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -149,10 +150,15 @@ public class SpinGui {
                     : services.messages().get(rare ? "spin.win-rare" : "spin.win",
                             Map.of("item", itemDisplayName(result.winnerItem())));
 
+            boolean stored = !zonk && services.roll().award(player, box, result);
+
             ChestGui gui = new ChestGui(3, services.messages().get("spin.result"));
             gui.fill(services.config().fillerItem());
             ItemStack prize = zonk ? new ItemStack(Material.GRAY_DYE, 1) : result.winnerItem().clone();
-            prize.editMeta(meta -> meta.lore(List.of(MM.deserialize(text))));
+            List<Component> lore = stored
+                    ? List.of(MM.deserialize(text), MM.deserialize(services.messages().get("claim.stored")))
+                    : List.of(MM.deserialize(text));
+            prize.editMeta(meta -> meta.lore(lore));
             gui.set(13, prize);
 
             long cooldown = services.roll().cooldownMillis(player, box);
@@ -166,10 +172,13 @@ public class SpinGui {
             gui.on(15, clk -> new BoxDetailGui(services).open(clk.player(), box))
                     .set(15, button(Material.SPECTRAL_ARROW, "<gray>Back"));
 
+            HelpBook helpBook = new HelpBook(services);
+            gui.on(23, clk -> helpBook.open(clk.player())).set(23, helpBook.icon());
+
             player.sendMessage(MM.deserialize(text));
+            if (stored) player.sendMessage(MM.deserialize(services.messages().get("claim.stored")));
             services.sounds().play(player,
                     zonk ? SoundRegistry.Event.ZONK : (rare ? SoundRegistry.Event.WIN_RARE : SoundRegistry.Event.WIN));
-            if (!zonk) services.roll().award(player, box, result);
             gui.open(player);
         }
 

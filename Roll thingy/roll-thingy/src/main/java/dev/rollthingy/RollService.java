@@ -70,14 +70,15 @@ public class RollService {
         return cache.itemOrNull(item.data());
     }
 
-    public void award(Player player, Box box, SpinResult result) {
-        if (result.outcome().tierIndex() == -1) return;
+    /** @return true when the prize could not fit and was stored in the player's claims. */
+    public boolean award(Player player, Box box, SpinResult result) {
+        if (result.outcome().tierIndex() == -1) return false;
         ItemStack prize = result.winnerItem();
-        if (prize == null) return;
+        if (prize == null) return false;
         Map<Integer, ItemStack> leftover = player.getInventory().addItem(prize);
-        if (!leftover.isEmpty()) {
-            claims.add(ItemBundleCodec.encode(List.of(leftover.get(0))), player.getUniqueId(), box.id(), System.currentTimeMillis());
-        }
+        if (leftover.isEmpty()) return false;
+        claims.add(ItemBundleCodec.encode(List.copyOf(leftover.values())), player.getUniqueId(), box.id(), System.currentTimeMillis());
+        return true;
     }
 
     double scoreDeposit(Box box, List<ItemStack> deposit) {

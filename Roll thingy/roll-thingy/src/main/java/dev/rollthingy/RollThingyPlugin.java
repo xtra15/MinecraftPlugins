@@ -2,6 +2,7 @@ package dev.rollthingy;
 
 import dev.rollthingy.command.RollCommand;
 import dev.rollthingy.listener.ChatPrompt;
+import dev.rollthingy.listener.ClaimNoticeListener;
 import dev.rollthingy.listener.MenuListener;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -14,6 +15,7 @@ public final class RollThingyPlugin extends JavaPlugin {
         services = new RollServices(this);
         Bukkit.getPluginManager().registerEvents(new MenuListener(services.gui()), this);
         Bukkit.getPluginManager().registerEvents(new ChatPrompt(this), this);
+        Bukkit.getPluginManager().registerEvents(new ClaimNoticeListener(this), this);
         RollCommand command = new RollCommand(this);
         org.bukkit.command.PluginCommand roll = getCommand("roll");
         if (roll != null) {

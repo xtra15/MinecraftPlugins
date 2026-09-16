@@ -1,11 +1,17 @@
 main:
   title: "<gold>Roll Thingy <gray>-<white> page <page>/<pages>"
   page: "Page <page>/<pages>"
+  prizes: "<gold>Your prizes <gray>(<count>)"
+  prizes-lore: "<gray>Collect prizes that were stored when your inventory was full"
 detail:
   title: "<gold><name>"
   check-items: "<gray>Click to view all possible prizes"
-  open: "<green>Click to spin"
-  payment: "<gray>Payment required"
+  open: "<green>Pay & Spin"
+  payment-title: "<green>Payment required"
+  payment-hint: "<gray>These are the items you must pay to spin this box"
+  payment-none: "<gray>Spin for free!"
+  payment-more: "<gray>+<count> more items..."
+  payment-summary: "<gray>Payment: <count> item(s)"
   cooldown: "<red>On cooldown <seconds>s"
 preview:
   title: "<gold>Prizes <gray>-<white> page <page>/<pages>"
@@ -13,6 +19,7 @@ preview:
 gui:
   page-prev: "<gray><< Previous"
   page-next: "<gray>Next >>"
+  help: "<yellow>Help"
 drop:
   banner: "<gold>How it works"
   step-price: "<white>1. Drop the required items in the <green>green row"
@@ -20,11 +27,11 @@ drop:
   step-confirm: "<white>3. Click <green>Confirm"
   current-label: "<aqua>Current payment"
   zone-bracket: "<gold>▼ drop here ▼"
-  hint-spin: "<gray>Place the required items in the green row, then click Spin"
+  hint-spin: "<gray>Payment: drop the required items in the green row, then click Spin"
 spin:
   title: "<gold>Spin <name>"
   deposit: "<gray>Place payment items here"
-  button: "<green>Spin!"
+  button: "<green>Pay & Spin!"
   required: "<aqua>Required payment"
   required-free: "<gray>Spin for free!"
   required-count: "x<count>"
@@ -46,6 +53,40 @@ claim:
   no-space: "<red>Not enough space in your inventory!"
   row-title: "<gold><count>x prize <gray>-<white> <date>"
   more: "<gray>+<extra> more items"
+  join-notice: "<yellow>You have <count> prize(s) waiting! Claim them with <green>/roll claim <white>or the <green>Your prizes <white>button in the menu."
+  stored: "<yellow>Inventory full - your prize was stored in Claims. Get it from the <green>Your prizes <white>button!"
+help:
+  title: "Roll Thingy Help"
+  author: "RollThingy"
+  icon-lore: "<gray>How to play, pay, and claim"
+  page-how: |
+    <gold><bold>Roll Thingy
+    <white>Roll boxes and win prizes!
+    <br><br><green>1)<white> Run <yellow>/roll<white>
+    <green>2)<white> Click a box to see its prizes and payment
+    <green>3)<white> Put the payment in the green row
+    <green>4)<white> Click <green>Pay & Spin<white> and watch it roll!
+  page-payment: |
+    <gold><bold>Payment & Luck
+    <white>Every box shows exactly what to pay on its detail screen.
+    <br>Drop the items in the <green>green row<white>, then spin.
+    <br><yellow>Exact<white> - must be that precise item.
+    <yellow>Any type<white> - any item of that type counts.
+    <br><aqua>Pay the full amount for the best luck!<white> Wrong or missing items make rare prizes rarer and the Zonk much more likely.
+  page-claims: |
+    <gold><bold>Prizes & Claims
+    <white>Prize items go straight into your inventory.
+    <br><red>Inventory full?<white> The prize is stored safely for you.
+    <br>Get it with the <green>Your prizes<white> button or <yellow>/roll claim<white>.
+  page-rarity: |
+    <gold><bold>Rarity
+    <white>Use <aqua>View prizes<white> to see every prize in a box.
+    <br>Each shows its chance, like <yellow>1.5%<white> or <gold>1 in 1,000,000<white> for ultra-rare items.
+  page-cooldown: |
+    <gold><bold>Cooldowns
+    <white>Each box has a cooldown after a spin.
+    <br>The spin button shows how many seconds are left.
+    <br>Wait it out or try another box!
 admin:
   title: "<gold>Roll Admin <gray>-<white> page <page>/<pages>"
   create: "<green>Create a new box"

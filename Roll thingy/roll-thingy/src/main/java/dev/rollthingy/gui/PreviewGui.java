@@ -4,6 +4,7 @@ import dev.rollthingy.RollServices;
 import dev.rollthingy.core.box.Box;
 import dev.rollthingy.core.box.OddsEngine;
 import dev.rollthingy.core.gui.ChestGui;
+import dev.rollthingy.core.misc.ChanceFormat;
 import dev.rollthingy.core.msg.SoundRegistry;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextColor;
@@ -79,23 +80,15 @@ public class PreviewGui {
                 double chance = model.chanceOf(tier, i);
                 ItemStack icon = services.cache().item(boxTier.items().get(i).data());
                 String rarity = boxTier.name();
-                String chanceStr = formatChance(chance);
+                String chanceStr = ChanceFormat.format(chance);
                 icon.editMeta(meta -> {
                     meta.displayName(Component.text(rarity).color(rarityColor(chance)));
-                    meta.lore(List.of(Component.text(chanceStr + "%")));
+                    meta.lore(List.of(Component.text(chanceStr)));
                 });
                 out.add(new Entry(chance, icon));
             }
         }
         return out;
-    }
-
-    private static String formatChance(double chance) {
-        if (chance >= 0.01) {
-            String s = String.format(java.util.Locale.ROOT, "%.2f", chance);
-            return s.replaceAll("0+$", "").replaceAll("\\.$", "");
-        }
-        return String.format(java.util.Locale.ROOT, "%.6f", chance).replaceAll("0+$", "").replaceAll("\\.$", "");
     }
 
     private static TextColor rarityColor(double chance) {

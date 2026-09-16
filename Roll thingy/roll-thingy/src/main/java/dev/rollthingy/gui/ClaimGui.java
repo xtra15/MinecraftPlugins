@@ -91,20 +91,31 @@ public class ClaimGui {
         for (int offset = 0; offset < total; offset += perPage) {
             rows.addAll(services.claims().unclaimedPage(player.getUniqueId(), perPage, offset));
         }
-        List<ItemStack> all = new ArrayList<>();
-        for (ClaimRow row : rows) all.addAll(ItemBundleCodec.decode(row.itemsData()));
+        List<ItemStack> reserved = new ArrayList<>();
+        long now = System.currentTimeMillis();
+        boolean any = false;
+        for (ClaimRow row : rows) {
+            if (!services.claims().markClaimed(row.id(), now)) continue;
+            any = true;
+            reserved.addAll(ItemBundleCodec.decode(row.itemsData()));
+        }
+        if (!any) {
+            open(player, 0);
+            return;
+        }
         int freeSlots = 0;
         for (ItemStack s : player.getInventory().getStorageContents()) {
             if (s == null || s.getType().isAir()) freeSlots++;
         }
-        if (freeSlots < all.size()) {
-            player.sendMessage(MM.deserialize(services.messages().get("claim.no-space")));
-            services.sounds().play(player, SoundRegistry.Event.ERROR);
-            return;
+        if (freeSlots < reserved.size()) {
+            if (!leftoverBack(player, reserved)) {
+                player.sendMessage(MM.deserialize(services.messages().get("claim.no-space")));
+                services.sounds().play(player, SoundRegistry.Event.ERROR);
+                return;
+            }
         }
-        player.getInventory().addItem(all.toArray(new ItemStack[0]));
-        long now = System.currentTimeMillis();
-        for (ClaimRow row : rows) services.claims().markClaimed(row.id(), now);
+        java.util.Map<Integer, ItemStack> leftover = player.getInventory().addItem(reserved.toArray(new ItemStack[0]));
+        if (!leftover.isEmpty()) leftoverBack(player, new ArrayList<>(leftover.values()));
         player.sendMessage(MM.deserialize(services.messages().get("claim.withdrawn")));
         services.sounds().play(player, SoundRegistry.Event.CONFIRM);
         open(player, 0);
@@ -115,22 +126,35 @@ public class ClaimGui {
         for (ClaimRow row : matches) {
             if (row.id() != rowId) continue;
             List<ItemStack> items = ItemBundleCodec.decode(row.itemsData());
+            long now = System.currentTimeMillis();
+            if (!services.claims().markClaimed(rowId, now)) {
+                open(player, 0);
+                return;
+            }
             int freeSlots = 0;
             for (ItemStack s : player.getInventory().getStorageContents()) {
                 if (s == null || s.getType().isAir()) freeSlots++;
             }
-            if (freeSlots < items.size()) {
+            if (freeSlots < items.size() && !leftoverBack(player, items)) {
                 player.sendMessage(MM.deserialize(services.messages().get("claim.no-space")));
                 services.sounds().play(player, SoundRegistry.Event.ERROR);
                 return;
             }
-            player.getInventory().addItem(items.toArray(new ItemStack[0]));
-            services.claims().markClaimed(rowId, System.currentTimeMillis());
+            java.util.Map<Integer, ItemStack> leftover = player.getInventory().addItem(items.toArray(new ItemStack[0]));
+            if (!leftover.isEmpty()) leftoverBack(player, new ArrayList<>(leftover.values()));
             player.sendMessage(MM.deserialize(services.messages().get("claim.withdrawn")));
             services.sounds().play(player, SoundRegistry.Event.CONFIRM);
             open(player, 0);
             return;
         }
+        open(player, 0);
+    }
+
+    /** Re-stores reserved items that could not be delivered; true when everything fit. */
+    private boolean leftoverBack(Player player, List<ItemStack> items) {
+        if (items.isEmpty()) return true;
+        services.claims().add(ItemBundleCodec.encode(items), player.getUniqueId(), "REQUEUED", System.currentTimeMillis());
+        return false;
     }
 
     private List<ClaimRow> allRows(Player player) {
