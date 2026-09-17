@@ -103,6 +103,26 @@ public class BoxDetailGui {
             gui.set(start + shown, button(Material.PAPER, services.messages().get("detail.payment-more",
                     Map.of("count", String.valueOf(payment.size() - shown)))));
         }
+        drawLuckPreview(gui, box, payment);
+    }
+
+    /** Shows the luck % the player gets if they pay the full requirement above the payment row. */
+    private void drawLuckPreview(ChestGui gui, Box box, List<PaymentRequirement> payment) {
+        if (payment.isEmpty()) return;
+        List<ItemStack> required = new ArrayList<>();
+        for (PaymentRequirement req : payment) {
+            ItemStack item = services.cache().item(req.data()).clone();
+            item.setAmount(req.amount());
+            required.add(item);
+        }
+        int luck = services.roll().luckPercent(box, required);
+        ItemStack badge = new ItemStack(Material.GOLD_NUGGET, 1);
+        badge.editMeta(meta -> {
+            meta.displayName(MM.deserialize(services.messages().get("detail.luck-preview-title")));
+            meta.lore(List.of(MM.deserialize(services.messages().get("detail.luck-preview",
+                    Map.of("luck", String.valueOf(luck))))));
+        });
+        gui.set(31, badge);
     }
 
     private ItemStack button(Material material, String text) {
