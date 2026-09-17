@@ -28,6 +28,8 @@ public class Game {
     private int buildSeconds;
     private int buildTick = -1;
 
+    private static final Random RANDOM = new Random();
+
     public Game(DeathSwap plugin) {
         this.plugin = plugin;
         this.arena = new ArenaConfig();
@@ -101,7 +103,7 @@ public class Game {
         return m;
     }
 
-    private <T> T random(List<T> list) { return list.get(new Random().nextInt(list.size())); }
+    private <T> T random(List<T> list) { return list.get(RANDOM.nextInt(list.size())); }
 
     void endFight() { reset(); }
 
