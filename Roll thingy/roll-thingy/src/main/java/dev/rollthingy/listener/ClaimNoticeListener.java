@@ -4,6 +4,7 @@ import dev.rollthingy.RollServices;
 import dev.rollthingy.RollThingyPlugin;
 import dev.rollthingy.core.msg.SoundRegistry;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -23,10 +24,15 @@ public class ClaimNoticeListener implements Listener {
     public void onJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
         RollServices services = plugin.services();
-        long count = services.claims().countUnclaimed(player.getUniqueId());
-        if (count <= 0) return;
-        player.sendMessage(MM.deserialize(services.messages().get("claim.join-notice",
-                Map.of("count", String.valueOf(count)))));
-        services.sounds().play(player, SoundRegistry.Event.OPEN);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            long count = services.claims().countUnclaimed(player.getUniqueId());
+            if (count <= 0) return;
+            Bukkit.getScheduler().runTask(plugin, () -> {
+                if (!player.isOnline()) return;
+                player.sendMessage(MM.deserialize(services.messages().get("claim.join-notice",
+                        Map.of("count", String.valueOf(count)))));
+                services.sounds().play(player, SoundRegistry.Event.OPEN);
+            });
+        });
     }
 }
