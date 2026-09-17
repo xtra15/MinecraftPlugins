@@ -171,12 +171,6 @@ public class SpinGui {
             clearDeposit();
 
             RollService.SpinResult result = services.roll().spin(player, box, deposit);
-            if (result.winnerItem() == null) {
-                // Zonk: consume payment, no reel animation needed.
-                player.closeInventory();
-                showResult(player, box, result);
-                return;
-            }
             services.sounds().play(player, SoundRegistry.Event.SPIN);
             List<ItemStack> reel = SpinAnimation.buildReel(services, box, result.winnerItem());
             player.closeInventory();

@@ -55,7 +55,7 @@ public class SpinAnimation {
         schedule();
     }
 
-    /** Builds the 29-icon reel ring once per spin; the winner is always the last element. */
+    /** Builds the 29-icon reel ring once per spin; the winner (or the Zonk) is always the last element. */
     public static List<ItemStack> buildReel(RollServices services, Box box, ItemStack winner) {
         List<ItemStack> pool = new ArrayList<>();
         for (var tier : box.tiers()) {
@@ -71,8 +71,15 @@ public class SpinAnimation {
         for (int i = 0; i < len - 1; i++) {
             reel.add(pool.get(rng.nextInt(pool.size())).clone());
         }
-        reel.add(winner.clone());
+        reel.add(winner != null ? winner.clone() : zonkIcon());
         return reel;
+    }
+
+    /** The reel lands on this when the roll is a Zonk (no winner item). */
+    private static ItemStack zonkIcon() {
+        ItemStack item = new ItemStack(Material.GRAY_DYE, 1);
+        item.editMeta(meta -> meta.displayName(MiniMessage.miniMessage().deserialize("<red>Zonk!")));
+        return item;
     }
 
     private void schedule() {
