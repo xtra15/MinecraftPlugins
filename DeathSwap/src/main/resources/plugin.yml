@@ -1,0 +1,13 @@
+name: DeathSwap
+version: 1.0.0
+main: dev.deathswap.DeathSwap
+api-version: '26.1'
+commands:
+  sswap:
+    description: "Death Swap admin commands"
+    usage: "/sswap <key|team|reset|status>"
+    permission: deathswap.admin
+permissions:
+  deathswap.admin:
+    description: "Access Death Swap admin commands"
+    default: op
