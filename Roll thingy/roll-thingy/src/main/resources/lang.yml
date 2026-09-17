@@ -8,7 +8,7 @@ detail:
   check-items: "<gray>Click to view all possible prizes"
   open: "<green>Pay & Spin"
   payment-title: "<green>Payment required"
-  payment-hint: "<gray>These are the items you must pay to spin this box"
+  payment-hint: "<gray>Pay the items above for <green>100% luck<gray> - paying anything else lowers it"
   payment-none: "<gray>Spin for free!"
   payment-more: "<gray>+<count> more items..."
   payment-summary: "<gray>Payment: <count> item(s)"
@@ -27,7 +27,7 @@ drop:
   step-confirm: "<white>3. Click <green>Confirm"
   current-label: "<aqua>Current payment"
   zone-bracket: "<gold>▼ drop here ▼"
-  hint-spin: "<gray>Payment: drop the required items in the green row, then click Spin"
+  hint-spin: "<gray>Spin with anything you have! Matching the list below gives <green>100% luck<gray>."
 spin:
   title: "<gold>Spin <name>"
   deposit: "<gray>Place payment items here"
@@ -37,6 +37,11 @@ spin:
   required-count: "x<count>"
   required-exact: "<gray>x<count> <yellow>exact"
   required-type: "<gray>x<count> <yellow>any type"
+  luck-empty: "<gray>Luck: <dark_gray>--"
+  luck: "<yellow>Luck: <luck>%"
+  luck-full: "<green>Luck: 100% - perfect payment!"
+  luck-hint: "<gray>Match the required items above for <green>100% luck<gray>."
+  luck-need: "<gray>Full luck needs <count> matching item(s) in total."
   on-cooldown: "<red>This box is on cooldown. Wait <seconds>s."
   no-payment: "<red>You haven't placed enough items."
   zonk: "<red>Zonk! Better luck next time!"
@@ -60,31 +65,31 @@ help:
   author: "RollThingy"
   icon-lore: "<gray>How to play, pay, and claim"
   page-how: |
-    <gold><bold>Roll Thingy
-    <white>Roll boxes and win prizes!
-    <br><br><green>1)<white> Run <yellow>/roll<white>
-    <green>2)<white> Click a box to see its prizes and payment
-    <green>3)<white> Put the payment in the green row
-    <green>4)<white> Click <green>Pay & Spin<white> and watch it roll!
+    <black><gold><bold>Roll Thingy
+    <black>Roll boxes and win prizes!
+    <br><br><green>1)<black> Run <yellow>/roll<black>
+    <green>2)<black> Click a box to see its prizes and payment
+    <green>3)<black> Put the payment in the green row
+    <green>4)<black> Click <green>Pay & Spin<black> and watch it roll!
   page-payment: |
     <gold><bold>Payment & Luck
-    <white>Every box shows exactly what to pay on its detail screen.
-    <br>Drop the items in the <green>green row<white>, then spin.
-    <br><yellow>Exact<white> - must be that precise item.
-    <yellow>Any type<white> - any item of that type counts.
-    <br><aqua>Pay the full amount for the best luck!<white> Wrong or missing items make rare prizes rarer and the Zonk much more likely.
+    <black>Every box shows exactly what to pay on its detail screen.
+    <br>Drop the items in the <green>green row<black>, then spin.
+    <br><yellow>Exact<black> - must be that precise item.
+    <yellow>Any type<black> - any item of that type counts.
+    <br><aqua>Pay the full amount for the best luck!<black> Wrong or missing items make rare prizes rarer and the Zonk much more likely.
   page-claims: |
     <gold><bold>Prizes & Claims
-    <white>Prize items go straight into your inventory.
-    <br><red>Inventory full?<white> The prize is stored safely for you.
-    <br>Get it with the <green>Your prizes<white> button or <yellow>/roll claim<white>.
+    <black>Prize items go straight into your inventory.
+    <br><red>Inventory full?<black> The prize is stored safely for you.
+    <br>Get it with the <green>Your prizes<black> button or <yellow>/roll claim<black>.
   page-rarity: |
     <gold><bold>Rarity
-    <white>Use <aqua>View prizes<white> to see every prize in a box.
-    <br>Each shows its chance, like <yellow>1.5%<white> or <gold>1 in 1,000,000<white> for ultra-rare items.
+    <black>Use <aqua>View prizes<black> to see every prize in a box.
+    <br>Each shows its chance, like <yellow>1.5%<black> or <gold>1 in 1,000,000<black> for ultra-rare items.
   page-cooldown: |
     <gold><bold>Cooldowns
-    <white>Each box has a cooldown after a spin.
+    <black>Each box has a cooldown after a spin.
     <br>The spin button shows how many seconds are left.
     <br>Wait it out or try another box!
 admin:
@@ -93,7 +98,7 @@ admin:
   rename: "<gold>Rename"
   icon: "<yellow>Change icon"
   payment: "<aqua>Payment"
-  penalty: "<light_purple>Penalty"
+  penalty: "<light_purple>Payment luck"
   cooldown: "<blue>Cooldown"
   zonk: "<red>Zonk"
   rarities: "<white>Rarities & prizes"
@@ -103,7 +108,21 @@ admin:
   name-prompt: "<yellow>Type the box name in chat (current: <name>)"
   rename-prompt: "<yellow>Type a new box name in chat (current: <name>)"
   cooldown-prompt: "<yellow>Type cooldown in seconds (current: <seconds>s), e.g. \"30\""
-  penalty-prompt: "<yellow>Type: <white>loose-value rare-cut zonk-feed <yellow>(current: <loose> <rare> <feed>), e.g. \"0.7 30 15\""
+  penalty-title: "<gold>Payment luck settings"
+  penalty-wrong: "<gold>Wrong-item value"
+  penalty-wrong-lore: "<gray>How much an item that is NOT in the required list counts toward payment. <white>1.0<gray> = counts fully (forgiving), <white>0.0<gray> = counts for nothing."
+  penalty-wrong-current: "<gray>Current: <white><loose>"
+  penalty-wrong-prompt: "<yellow>Wrong-item value <white>(0 to 1): <gray>how much non-required items count. Current: <loose>"
+  penalty-rare: "<aqua>Rare cut"
+  penalty-rare-lore: "<gray>When a player underpays, rare prizes get harder by <white>up to this %<gray>."
+  penalty-rare-current: "<gray>Current: <white><rare>%"
+  penalty-rare-prompt: "<yellow>Rare cut <white>(0 to 100): <gray>max % that rare prizes shrink when underpaying. Current: <rare>%"
+  penalty-feed: "<light_purple>Zonk feed"
+  penalty-feed-lore: "<gray>When a player underpays, the Zonk chance rises by <white>up to this %<gray>."
+  penalty-feed-current: "<gray>Current: <white><feed>%"
+  penalty-feed-prompt: "<yellow>Zonk feed <white>(0 to 100): <gray>max % that the Zonk chance rises when underpaying. Current: <feed>%"
+  penalty-info-title: "<gold>How payment luck works"
+  penalty-info: "<gray>Short payment = less luck: rare prizes get rarer and the Zonk gets more likely. Paying all the required items always keeps <green>100% luck<gray>. Click a setting above to change its number."
   weight-prompt: "<yellow>Type tier weight (current: <weight>), e.g. \"2.5\""
   item-weight-prompt: "<yellow>Type item weight (current: <weight>), e.g. \"2.5\""
   icon-prompt: "<yellow>Drop an item in the <green>top row <yellow>to set it as the box icon"
@@ -115,7 +134,7 @@ admin:
   toggle-hint: "<gray>Click to switch exact / any-type"
   payment-save: "<green>Set payment items"
   payment-none: "<gray>None set"
-  penalty-current: "<gray>loose <loose> · rare-cut <rare> · zonk-feed <feed>"
+  penalty-current: "<gray>Wrong-item value <loose> · Rare cut <rare>% · Zonk feed <feed>%"
   payment-hint: "<yellow>Click to set new payment items"
   rarity:
     add: "<green>Add a rarity tier"

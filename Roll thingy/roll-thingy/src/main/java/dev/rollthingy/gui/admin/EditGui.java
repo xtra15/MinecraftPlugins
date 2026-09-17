@@ -50,7 +50,7 @@ public class EditGui {
         gui.on(48, clk -> new IconPickerGui(services).open(clk.player(), box))
                 .set(48, button(Material.ITEM_FRAME, services.messages().get("admin.icon"),
                         List.of(MM.deserialize("<gray>Current: <white>" + iconMaterial(box)))));
-        gui.on(49, clk -> penalty(admin, box))
+        gui.on(49, clk -> new PenaltyGui(services).open(clk.player(), box))
                 .set(49, button(Material.BLAZE_POWDER, services.messages().get("admin.penalty"),
                         penaltyLore(box)));
         gui.on(50, clk -> cooldown(admin, box))
@@ -133,35 +133,6 @@ public class EditGui {
             admin.sendMessage(MM.deserialize(services.messages().get("admin.saved")));
             admin.closeInventory();
             new EditGui(services).open(admin, updated);
-        });
-    }
-
-    private void penalty(Player admin, Box box) {
-        Penalty p = box.penalty();
-        admin.sendMessage(MM.deserialize(services.messages().get("admin.penalty-prompt",
-                Map.of("loose", fmt(p.looseValue()), "rare", fmt(p.rareCut()), "feed", fmt(p.zonkFeed())))));
-        services.sounds().play(admin, SoundRegistry.Event.CLICK);
-        ChatPrompt.prompt(admin, input -> {
-            String[] parts = input.trim().split("\\s+");
-            if (parts.length != 3) {
-                admin.sendMessage(MM.deserialize(services.messages().get("errors.bad-input",
-                        Map.of("example", "0.7 30 15"))));
-                return;
-            }
-            try {
-                double loose = Double.parseDouble(parts[0]);
-                double rare = Double.parseDouble(parts[1]);
-                double feed = Double.parseDouble(parts[2]);
-                Box updated = new Box(box.id(), box.name(), box.icon(), box.payment(),
-                        new Penalty(loose, rare, feed), box.cooldownSeconds(), box.zonk(), box.tiers());
-                services.cache().addOrUpdate(updated);
-                admin.sendMessage(MM.deserialize(services.messages().get("admin.saved")));
-                admin.closeInventory();
-                new EditGui(services).open(admin, updated);
-            } catch (NumberFormatException e) {
-                admin.sendMessage(MM.deserialize(services.messages().get("errors.bad-input",
-                        Map.of("example", "0.7 30 15"))));
-            }
         });
     }
 

@@ -153,4 +153,9 @@ public class RollService {
         for (PaymentRequirement req : box.payment()) total += req.amount();
         return total;
     }
+
+    /** Live luck (0-100) the current deposit would get; 100 when the required items are paid. */
+    public int luckPercent(Box box, List<ItemStack> deposit) {
+        return PenaltyMath.luckPercent(scoreDeposit(box, deposit), requiredAmount(box));
+    }
 }

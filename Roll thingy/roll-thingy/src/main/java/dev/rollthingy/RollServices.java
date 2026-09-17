@@ -41,7 +41,7 @@ public class RollServices {
         this.roll = new RollService(cache, cooldowns, claims);
         this.messages = new MessageRepository(new File(plugin.getDataFolder(), "lang.yml"), plugin.getResource("lang.yml"));
         this.sounds = new SoundRegistry(new File(plugin.getDataFolder(), "sounds.yml"));
-        this.gui = new GuiManager();
+        this.gui = new GuiManager(plugin);
     }
 
     public void close() {

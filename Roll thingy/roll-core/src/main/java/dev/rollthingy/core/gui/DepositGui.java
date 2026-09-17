@@ -55,6 +55,9 @@ public class DepositGui extends ChestGui {
         this.confirmed = true;
     }
 
+    /** Called (next tick) whenever the player changes what's in the deposit slots. */
+    protected void onChanged(Player player) {}
+
     public boolean isConfirmed() {
         return confirmed;
     }

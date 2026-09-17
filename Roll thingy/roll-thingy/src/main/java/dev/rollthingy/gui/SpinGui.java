@@ -14,6 +14,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -63,37 +64,77 @@ public class SpinGui {
             set(18, bracket());
             set(4, boxIcon());
             drawRequirements();
+            set(40, luckBadge());
+        }
+
+        @Override
+        protected void onChanged(Player player) {
+            if (started || inventory() == null) return;
+            if (player.getOpenInventory().getTopInventory() != inventory()) return;
+            set(40, luckBadge());
+        }
+
+        /** Live luck gauge: updates as the player drops payment in, so they know their odds. */
+        private ItemStack luckBadge() {
+            List<ItemStack> deposit = collect();
+            int luck = services.roll().luckPercent(box, deposit);
+            boolean full = !deposit.isEmpty() && luck >= 100;
+            Material mat = deposit.isEmpty() ? Material.GRAY_DYE
+                    : full ? Material.EMERALD
+                    : luck >= 50 ? Material.NETHER_STAR
+                    : Material.RED_DYE;
+            String title = deposit.isEmpty()
+                    ? services.messages().get("spin.luck-empty")
+                    : full ? services.messages().get("spin.luck-full")
+                    : services.messages().get("spin.luck", Map.of("luck", String.valueOf(luck)));
+            List<Component> lore = new ArrayList<>();
+            lore.add(MM.deserialize(services.messages().get("spin.luck-hint")));
+            if (!deposit.isEmpty() && !full) {
+                lore.add(MM.deserialize(services.messages().get("spin.luck-need",
+                        Map.of("count", String.valueOf(requiredTotal())))));
+            }
+            ItemStack badge = new ItemStack(mat, 1);
+            badge.editMeta(meta -> {
+                meta.displayName(MM.deserialize(title));
+                meta.lore(lore);
+            });
+            return badge;
+        }
+
+        private int requiredTotal() {
+            return box.payment().stream().mapToInt(PaymentRequirement::amount).sum();
         }
 
         private ItemStack boxIcon() {
             ItemStack icon = services.cache().icon(box);
-            icon.editMeta(meta -> meta.lore(List.of(
-                    MM.deserialize(services.messages().get("drop.hint-spin")),
-                    MM.deserialize("<gray>Payment: " + summary()))));
+            icon.editMeta(meta -> {
+                meta.displayName(MM.deserialize("<gold>" + box.name()));
+                meta.lore(List.of(
+                        MM.deserialize(services.messages().get("drop.hint-spin")),
+                        MM.deserialize("<gray>Payment: " + summary())));
+            });
             return icon;
         }
 
         private void drawRequirements() {
             List<PaymentRequirement> payment = box.payment();
             if (payment.isEmpty()) {
-                ItemStack free = button(Material.PAPER, services.messages().get("spin.required-free"));
-                set(22, free);
+                set(22, button(Material.PAPER, services.messages().get("spin.required-free")));
                 return;
             }
-            int slot = 19;
-            for (int i = 0; i < payment.size() && slot <= 26; i++) {
+            int shown = Math.min(payment.size(), 8);
+            int start = 19 + ((8 - shown) / 2);
+            for (int i = 0; i < shown; i++) {
                 PaymentRequirement req = payment.get(i);
                 ItemStack icon = services.cache().item(req.data());
                 String label = req.strict()
                         ? services.messages().get("spin.required-exact", Map.of("count", String.valueOf(req.amount())))
                         : services.messages().get("spin.required-type", Map.of("count", String.valueOf(req.amount())));
                 icon.editMeta(meta -> meta.lore(List.of(MM.deserialize(label))));
-                set(slot, icon);
-                slot++;
+                set(start + i, icon);
             }
-            if (payment.size() > 8) {
-                ItemStack more = button(Material.PAPER, "<gray>+" + (payment.size() - 8) + " more");
-                set(26, more);
+            if (payment.size() > shown) {
+                set(26, button(Material.PAPER, "<gray>+" + (payment.size() - shown) + " more"));
             }
         }
 

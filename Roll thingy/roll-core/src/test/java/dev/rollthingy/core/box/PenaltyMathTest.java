@@ -30,4 +30,14 @@ class PenaltyMathTest {
         // 2 (diamonds) + 2 (stone counts fully within loose req) + 4*0.25 (dirt = wrong) = 5
         assertEquals(5.0, score, 1e-9);
     }
+
+    @Test
+    void luckPercentScalesAgainstRequiredAndClamps() {
+        assertEquals(100, PenaltyMath.luckPercent(2, 2));
+        assertEquals(50, PenaltyMath.luckPercent(1, 2));
+        assertEquals(0, PenaltyMath.luckPercent(0, 2));
+        assertEquals(100, PenaltyMath.luckPercent(2, 0));
+        assertEquals(100, PenaltyMath.luckPercent(9, 2));
+        assertEquals(33, PenaltyMath.luckPercent(1, 3));
+    }
 }

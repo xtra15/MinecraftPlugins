@@ -31,17 +31,23 @@ public class BoxDetailGui {
         gui.fill(services.config().fillerItem());
         gui.fillRect(9, 44, null);
 
+        // Box name centerpiece, sits above the (centered) payment panel
         ItemStack icon = services.cache().icon(box);
-        List<Component> lore = new ArrayList<>();
+        List<Component> iconLore = new ArrayList<>();
         List<PaymentRequirement> payment = box.payment();
         int total = payment.stream().mapToInt(PaymentRequirement::amount).sum();
-        lore.add(MM.deserialize(services.messages().get("detail.payment-summary",
+        iconLore.add(MM.deserialize(services.messages().get("detail.payment-title")));
+        iconLore.add(MM.deserialize(services.messages().get("detail.payment-summary",
                 Map.of("count", String.valueOf(total)))));
+        iconLore.add(MM.deserialize(services.messages().get("detail.payment-hint")));
         if (!box.tiers().isEmpty()) {
-            lore.add(MM.deserialize("<gray>" + box.tiers().size() + " rarity tiers"));
+            iconLore.add(MM.deserialize("<gray>" + box.tiers().size() + " rarity tiers"));
         }
-        icon.editMeta(meta -> meta.lore(lore));
-        gui.set(4, icon);
+        icon.editMeta(meta -> {
+            meta.displayName(MM.deserialize("<gold>" + box.name()));
+            meta.lore(iconLore);
+        });
+        gui.set(13, icon);
 
         drawPayment(gui, box);
 
@@ -75,45 +81,33 @@ public class BoxDetailGui {
         gui.open(player);
     }
 
-    /** Payment panel: header at 10, requirement icons at 11-17 (up to 7 plus a "more" note). */
+    /** Payment icons centred on row 3 (slots 18-26) so a single item sits mid-screen. */
     private void drawPayment(ChestGui gui, Box box) {
-        ItemStack header = button(Material.GREEN_STAINED_GLASS_PANE, services.messages().get("detail.payment-title"),
-                List.of(MM.deserialize(services.messages().get("detail.payment-hint"))));
-        gui.set(10, header);
-
         List<PaymentRequirement> payment = box.payment();
         if (payment.isEmpty()) {
-            gui.set(11, button(Material.PAPER, services.messages().get("detail.payment-none")));
+            gui.set(22, button(Material.PAPER, services.messages().get("detail.payment-none")));
             return;
         }
-        int slot = 11;
-        for (int i = 0; i < payment.size() && slot <= 17; i++, slot++) {
+        int shown = Math.min(payment.size(), 7);
+        int start = 18 + ((9 - shown) / 2);
+        for (int i = 0; i < shown; i++) {
             PaymentRequirement req = payment.get(i);
-            ItemStack icon = services.cache().item(req.data());
+            ItemStack reqIcon = services.cache().item(req.data());
             String label = req.strict()
                     ? services.messages().get("spin.required-exact", Map.of("count", String.valueOf(req.amount())))
                     : services.messages().get("spin.required-type", Map.of("count", String.valueOf(req.amount())));
-            icon.editMeta(meta -> meta.lore(List.of(MM.deserialize(label))));
-            gui.set(slot, icon);
+            reqIcon.editMeta(meta -> meta.lore(List.of(MM.deserialize(label))));
+            gui.set(start + i, reqIcon);
         }
-        if (payment.size() > 7) {
-            gui.set(17, button(Material.PAPER, services.messages().get("detail.payment-more",
-                    Map.of("count", String.valueOf(payment.size() - 7)))));
+        if (payment.size() > shown) {
+            gui.set(start + shown, button(Material.PAPER, services.messages().get("detail.payment-more",
+                    Map.of("count", String.valueOf(payment.size() - shown)))));
         }
     }
 
     private ItemStack button(Material material, String text) {
         ItemStack item = new ItemStack(material, 1);
         item.editMeta(meta -> meta.displayName(MM.deserialize(text)));
-        return item;
-    }
-
-    private ItemStack button(Material material, String text, List<Component> lore) {
-        ItemStack item = new ItemStack(material, 1);
-        item.editMeta(meta -> {
-            meta.displayName(MM.deserialize(text));
-            meta.lore(lore);
-        });
         return item;
     }
 }

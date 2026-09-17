@@ -30,4 +30,12 @@ public final class PenaltyMath {
         score += wrong * looseValue;
         return score;
     }
+
+    /** How much luck (0-100) a deposit gives relative to the required payment amount. */
+    public static int luckPercent(double contributed, double required) {
+        if (required <= 0) return 100;
+        if (contributed <= 0) return 0;
+        double pct = 100.0 * contributed / required;
+        return (int) Math.min(100, Math.round(pct));
+    }
 }
