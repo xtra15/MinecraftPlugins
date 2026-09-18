@@ -236,7 +236,7 @@ public class SpinGui {
                 player.sendMessage(MM.deserialize(text));
                 if (stored.get(i)) player.sendMessage(MM.deserialize(services.messages().get("claim.stored")));
             }
-            new MultiResultGui(services).open(player, box, results, stored);
+            new MultiResultGui(services).open(player, box, results, stored, 0);
         }
 
         private void logHistory(Player player, Box box, List<String> deposits,
