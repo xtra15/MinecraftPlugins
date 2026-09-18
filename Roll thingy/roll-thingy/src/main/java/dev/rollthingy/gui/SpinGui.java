@@ -173,7 +173,7 @@ public class SpinGui {
             clearDeposit();
 
             double required = RollService.requiredAmount(box);
-            int units = RollService.totalUnits(deposit);
+            int units = RollService.totalStacks(deposit);
             int full = required > 0 ? (int) (units / required) : 1;
             int reqInt = required > 0 ? (int) required : 0;
 

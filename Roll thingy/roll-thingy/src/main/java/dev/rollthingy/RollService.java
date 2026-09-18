@@ -155,11 +155,11 @@ public class RollService {
         return total;
     }
 
-    /** Total item units in a deposit (sums stack amounts, skips air). */
-    public static int totalUnits(List<ItemStack> deposit) {
+    /** Total stacks in a deposit (one ItemStack object = one unit, matching scoreDeposit). */
+    public static int totalStacks(List<ItemStack> deposit) {
         int total = 0;
         for (ItemStack item : deposit) {
-            if (item != null && !item.getType().isAir()) total += item.getAmount();
+            if (item != null && !item.getType().isAir()) total++;
         }
         return total;
     }
@@ -168,14 +168,14 @@ public class RollService {
     public int spinCountFor(Box box, List<ItemStack> deposit) {
         double required = requiredAmount(box);
         if (required <= 0) return 1;
-        int units = totalUnits(deposit);
+        int units = totalStacks(deposit);
         if (units <= 0) return 0;
         return Math.max(1, (int) (units / required));
     }
 
     public record Split(List<List<ItemStack>> spins, List<ItemStack> leftover) {}
 
-    /** Carves {@code spins} chunks of {@code unitsPerSpin} units out of the deposit (cloned); rest is leftover. */
+    /** Carves {@code spins} chunks of {@code unitsPerSpin} whole stacks out of the deposit (cloned); rest is leftover. */
     public Split splitDeposit(List<ItemStack> deposit, int spins, int unitsPerSpin) {
         List<ItemStack> rest = new ArrayList<>();
         for (ItemStack item : deposit) {
@@ -185,16 +185,8 @@ public class RollService {
         if (spins <= 0 || unitsPerSpin <= 0) return new Split(out, rest);
         for (int i = 0; i < spins; i++) {
             List<ItemStack> chunk = new ArrayList<>();
-            int need = unitsPerSpin;
-            while (need > 0 && !rest.isEmpty()) {
-                ItemStack head = rest.get(0);
-                int take = Math.min(need, head.getAmount());
-                ItemStack part = head.clone();
-                part.setAmount(take);
-                chunk.add(part);
-                if (take >= head.getAmount()) rest.remove(0);
-                else head.setAmount(head.getAmount() - take);
-                need -= take;
+            for (int j = 0; j < unitsPerSpin && !rest.isEmpty(); j++) {
+                chunk.add(rest.remove(0));
             }
             out.add(chunk);
         }
