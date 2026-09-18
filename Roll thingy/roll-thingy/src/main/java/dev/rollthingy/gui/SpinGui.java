@@ -253,7 +253,8 @@ public class SpinGui {
                 rows.add(new SpinHistoryRow(0, player.getUniqueId(), player.getName(), box.id(), box.name(),
                         now + i, deposits.get(i), luck, result.shortfall(), resultData, stored.get(i)));
             }
-            services.history().addAll(rows);
+            org.bukkit.Bukkit.getScheduler().runTaskAsynchronously(services.plugin(),
+                    () -> services.history().addAll(rows));
         }
 
         private void showResult(Player player, Box box, RollService.SpinResult result, String depositData) {
