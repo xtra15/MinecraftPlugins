@@ -30,8 +30,8 @@ class ChanceFormatTest {
 
     @Test
     void tinyChanceShowsGroupedOneInValue() {
-        assertEquals("1 in 1,001,001", ChanceFormat.format(0.0000999));
-        assertEquals("1 in 200,000,000,000", ChanceFormat.format(5e-10));
+        assertEquals("1 in 1.001001m", ChanceFormat.format(0.0000999));
+        assertEquals("1 in 200b", ChanceFormat.format(5e-10));
     }
 
     @Test
@@ -40,6 +40,11 @@ class ChanceFormatTest {
         assertEquals("1 in 2", ChanceFormat.oneInX(50));
         assertEquals("1 in 67", ChanceFormat.oneInX(1.5));
         assertEquals("1 in 200", ChanceFormat.oneInX(0.5));
-        assertEquals("1 in 1,001,001", ChanceFormat.oneInX(0.0000999));
+        assertEquals("1 in 1.5k", ChanceFormat.oneInX(100.0 / 1500));
+        assertEquals("1 in 1.001001m", ChanceFormat.oneInX(0.0000999));
+        assertEquals("1 in 2m", ChanceFormat.oneInX(0.00005));
+        assertEquals("1 in 1b", ChanceFormat.oneInX(1e-7));
+        assertEquals("1 in 200b", ChanceFormat.oneInX(5e-10));
+        assertEquals("1 in 10t", ChanceFormat.oneInX(1e-11));
     }
 }
