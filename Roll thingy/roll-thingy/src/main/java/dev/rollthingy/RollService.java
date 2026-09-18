@@ -85,6 +85,7 @@ public class RollService {
     double scoreDeposit(Box box, List<ItemStack> deposit) {
         Map<String, Integer> strictCounts = new HashMap<>();
         Map<String, Integer> looseCounts = new HashMap<>();
+        Map<String, Integer> wrongCounts = new HashMap<>();
         List<PaymentRequirement> reqs = box.payment();
         // Decode each requirement's spec once (Java serialization is expensive).
         Map<String, List<Map<String, Object>>> specs = new HashMap<>();
@@ -118,22 +119,26 @@ public class RollService {
         }
         for (ItemStack item : deposit) {
             if (item == null) continue;
+            boolean matched = false;
             for (PaymentRequirement req : reqs) {
                 if (req.strict()) {
                     ItemStack template = strictTemplates.get(req.data());
                     if (template != null && item.isSimilar(template)) {
                         strictCounts.merge(req.data(), 1, Integer::sum);
+                        matched = true;
                         break;
                     }
                 } else {
                     String material = looseMaterials.get(req.data());
                     if (material != null && item.getType().name().equals(material)) {
+                        matched = true;
                         break;
                     }
                 }
             }
+            if (!matched) wrongCounts.merge(item.getType().name(), 1, Integer::sum);
         }
-        return PenaltyMath.contributedScore(box.payment(), strictCounts, looseCounts);
+        return PenaltyMath.contributedScore(box.payment(), strictCounts, looseCounts, box.penalty().looseValue(), wrongCounts);
     }
 
     private static List<Map<String, Object>> safeDecode(String data) {

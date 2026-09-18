@@ -156,7 +156,8 @@ public class BoxDetailGui {
                                 "luck", String.valueOf(luckHalf)))),
                 MM.deserialize(services.messages().get("detail.odds-effect",
                         Map.of("factor", fmt(factor), "base", fmt(baseZonk), "new", fmt(newZonk)))),
-                MM.deserialize(services.messages().get("detail.odds-wrong")));
+                MM.deserialize(services.messages().get("detail.odds-wrong",
+                        Map.of("loose", fmt(penalty.looseValue())))));
         ItemStack book = new ItemStack(Material.BOOK, 1);
         book.editMeta(meta -> {
             meta.displayName(MM.deserialize(services.messages().get("detail.odds-title")));
