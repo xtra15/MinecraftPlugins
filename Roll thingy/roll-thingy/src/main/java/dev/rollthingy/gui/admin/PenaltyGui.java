@@ -33,12 +33,11 @@ public class PenaltyGui {
         gui.fill(services.config().fillerItem());
         gui.fillRect(9, 44, null);
 
-        gui.on(10, clk -> edit(admin, box, Setting.WRONG))
+        gui.on(10, clk -> services.sounds().play(admin, SoundRegistry.Event.CLICK))
                 .set(10, setting(Material.STICK,
                         services.messages().get("admin.penalty-wrong"),
                         services.messages().get("admin.penalty-wrong-lore"),
-                        services.messages().get("admin.penalty-wrong-current",
-                                Map.of("loose", fmt(p.looseValue())))));
+                        services.messages().get("admin.penalty-wrong-current")));
         gui.on(13, clk -> edit(admin, box, Setting.RARE))
                 .set(13, setting(Material.RED_DYE,
                         services.messages().get("admin.penalty-rare"),
@@ -66,21 +65,12 @@ public class PenaltyGui {
         gui.open(admin);
     }
 
-    private enum Setting { WRONG, RARE, FEED }
+    private enum Setting { RARE, FEED }
 
     private void edit(Player admin, Box box, Setting setting) {
         Penalty p = box.penalty();
         services.sounds().play(admin, SoundRegistry.Event.CLICK);
         switch (setting) {
-            case WRONG -> {
-                admin.sendMessage(MM.deserialize(services.messages().get("admin.penalty-wrong-prompt",
-                        Map.of("loose", fmt(p.looseValue())))));
-                ChatPrompt.prompt(admin, input -> {
-                    Double v = parse(input);
-                    if (v == null) { badInput(admin, "0.5"); return; }
-                    save(admin, box, new Penalty(clamp(v, 0, 1), p.rareCut(), p.zonkFeed()));
-                });
-            }
             case RARE -> {
                 admin.sendMessage(MM.deserialize(services.messages().get("admin.penalty-rare-prompt",
                         Map.of("rare", fmt(p.rareCut())))));

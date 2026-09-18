@@ -13,11 +13,10 @@ public final class PenaltyMath {
         return Math.max(0, Math.min(1, 1 - ratio));
     }
 
+    /** Matched stacks count 1 each; unlisted junk always counts 0. */
     public static double contributedScore(List<PaymentRequirement> requirements,
                                           Map<String, Integer> strictCounts,
-                                          Map<String, Integer> looseCounts,
-                                          double looseValue,
-                                          Map<String, Integer> wrongCounts) {
+                                          Map<String, Integer> looseCounts) {
         double score = 0;
         for (PaymentRequirement req : requirements) {
             if (req.strict()) {
@@ -26,8 +25,6 @@ public final class PenaltyMath {
                 score += looseCounts.getOrDefault(req.data(), 0);
             }
         }
-        double wrong = wrongCounts.values().stream().mapToInt(Integer::intValue).sum();
-        score += wrong * looseValue;
         return score;
     }
 

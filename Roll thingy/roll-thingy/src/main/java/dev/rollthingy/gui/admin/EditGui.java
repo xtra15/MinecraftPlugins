@@ -91,7 +91,7 @@ public class EditGui {
     private List<Component> penaltyLore(Box box) {
         Penalty p = box.penalty();
         return List.of(MM.deserialize(services.messages().get("admin.penalty-current",
-                Map.of("loose", fmt(p.looseValue()), "rare", fmt(p.rareCut()), "feed", fmt(p.zonkFeed())))));
+                Map.of("rare", fmt(p.rareCut()), "feed", fmt(p.zonkFeed())))));
     }
 
     private List<Component> zonkLore(Box box) {

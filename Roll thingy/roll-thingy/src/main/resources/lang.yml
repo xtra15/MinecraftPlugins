@@ -18,7 +18,7 @@ detail:
   odds-full: "<gray>Pay all <req> → <green>100% luck"
   odds-half: "<gray>Pay <half> of <req> → <yellow><luck>% luck"
   odds-effect: "<gray>Prizes ×<factor> · Zonk <base>% → <new>%"
-  odds-wrong: "<gray>Unlisted items count <loose> each"
+  odds-wrong: "<gray>Unlisted junk always counts <red>0"
   cooldown: "<red>On cooldown <seconds>s"
 preview:
   title: "<gold>Prizes <gray>-<white> page <page>/<pages>"
@@ -104,7 +104,7 @@ help:
     <br>Drop the items in the <green>green row<black>, then spin.
     <br><yellow>Exact<black> - must be that precise item.
     <yellow>Any type<black> - any item of that type counts.
-    <br><aqua>Pay the full amount for the best luck!<black> Wrong or missing items make rare prizes rarer and the Zonk much more likely.
+    <br><aqua>Pay the full amount for the best luck!<black> Unlisted junk gives zero luck. Missing items make rare prizes rarer and the Zonk much more likely.
   page-claims: |
     <gold><bold>Prizes & Claims
     <black>Prize items go straight into your inventory.
@@ -137,9 +137,9 @@ admin:
   rename-prompt: "<yellow>Type a new box name in chat (current: <name>)"
   cooldown-prompt: "<yellow>Type cooldown in seconds (current: <seconds>s), e.g. \"30\""
   penalty-title: "<gold>Payment luck settings"
-  penalty-wrong: "<gold>Wrong-item value"
-  penalty-wrong-lore: "<gray>How much an item that is NOT in the required list counts toward payment. <white>1.0<gray> = counts fully (forgiving), <white>0.0<gray> = counts for nothing."
-  penalty-wrong-current: "<gray>Current: <white><loose>"
+  penalty-wrong: "<gold>Unlisted items"
+  penalty-wrong-lore: "<gray>Items NOT in the required list always count <red>0 <gray>toward payment. Fixed - cannot be changed."
+  penalty-wrong-current: "<gray>Current: <white>0 (fixed)"
   penalty-wrong-prompt: "<yellow>Wrong-item value <white>(0 to 1): <gray>how much non-required items count. Current: <loose>"
   penalty-rare: "<aqua>Rare cut"
   penalty-rare-lore: "<gray>When a player underpays, rare prizes get harder by <white>up to this %<gray>."
@@ -162,7 +162,7 @@ admin:
   toggle-hint: "<gray>Click to switch exact / any-type"
   payment-save: "<green>Set payment items"
   payment-none: "<gray>None set"
-  penalty-current: "<gray>Wrong-item value <loose> · Rare cut <rare>% · Zonk feed <feed>%"
+  penalty-current: "<gray>Unlisted items 0 · Rare cut <rare>% · Zonk feed <feed>%"
   payment-hint: "<yellow>Click to set new payment items"
   rarity:
     add: "<green>Add a rarity tier"

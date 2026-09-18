@@ -24,11 +24,20 @@ class PenaltyMathTest {
                 new PaymentRequirement("STONE_DATA", 4, false));
         double score = PenaltyMath.contributedScore(reqs,
                 Map.of("DIAMOND_DATA", 2),
-                Map.of("STONE_DATA", 2),
-                0.25,
-                Map.of("DIRT", 4));
-        // 2 (diamonds) + 2 (stone counts fully within loose req) + 4*0.25 (dirt = wrong) = 5
-        assertEquals(5.0, score, 1e-9);
+                Map.of("STONE_DATA", 2));
+        // 2 (diamonds) + 2 (stone counts fully within loose req) = 4
+        assertEquals(4.0, score, 1e-9);
+    }
+
+    @Test
+    void unlistedJunkCountsZero() {
+        List<PaymentRequirement> reqs = List.of(
+                new PaymentRequirement("DIAMOND_DATA", 2, true));
+        // Even a pile of junk adds nothing; only the 1 matching stack counts.
+        double score = PenaltyMath.contributedScore(reqs,
+                Map.of("DIAMOND_DATA", 1),
+                Map.of());
+        assertEquals(1.0, score, 1e-9);
     }
 
     @Test
