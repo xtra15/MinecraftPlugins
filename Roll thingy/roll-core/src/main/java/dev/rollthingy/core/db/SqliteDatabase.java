@@ -114,6 +114,7 @@ public final class SqliteDatabase implements AutoCloseable {
             try (Statement st = c.createStatement()) {
                 st.executeUpdate("DELETE FROM cooldowns");
                 st.executeUpdate("DELETE FROM claims");
+                st.executeUpdate("DELETE FROM spin_history");
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -146,6 +147,21 @@ public final class SqliteDatabase implements AutoCloseable {
               claimed_at INTEGER
             );
             CREATE INDEX IF NOT EXISTS idx_claims_owner ON claims(player_uuid);
+            CREATE TABLE IF NOT EXISTS spin_history (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              player_uuid TEXT NOT NULL,
+              player_name TEXT NOT NULL,
+              box_id TEXT NOT NULL,
+              box_name TEXT NOT NULL,
+              created_at INTEGER NOT NULL,
+              deposit_data TEXT NOT NULL,
+              luck INTEGER NOT NULL,
+              shortfall REAL NOT NULL,
+              result_data TEXT NOT NULL,
+              stored INTEGER NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_spin_history_time ON spin_history(created_at DESC);
+            CREATE INDEX IF NOT EXISTS idx_spin_history_player ON spin_history(player_uuid, created_at DESC);
             """;
 
     @FunctionalInterface

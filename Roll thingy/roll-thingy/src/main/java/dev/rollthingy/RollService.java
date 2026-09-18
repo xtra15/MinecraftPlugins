@@ -14,6 +14,7 @@ import dev.rollthingy.core.store.CooldownStore;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,10 +149,56 @@ public class RollService {
         }
     }
 
-    static double requiredAmount(Box box) {
+    public static double requiredAmount(Box box) {
         double total = 0;
         for (PaymentRequirement req : box.payment()) total += req.amount();
         return total;
+    }
+
+    /** Total item units in a deposit (sums stack amounts, skips air). */
+    public static int totalUnits(List<ItemStack> deposit) {
+        int total = 0;
+        for (ItemStack item : deposit) {
+            if (item != null && !item.getType().isAir()) total += item.getAmount();
+        }
+        return total;
+    }
+
+    /** How many full spins fit in this deposit; min 1 when something was paid (free boxes: 1). */
+    public int spinCountFor(Box box, List<ItemStack> deposit) {
+        double required = requiredAmount(box);
+        if (required <= 0) return 1;
+        int units = totalUnits(deposit);
+        if (units <= 0) return 0;
+        return Math.max(1, (int) (units / required));
+    }
+
+    public record Split(List<List<ItemStack>> spins, List<ItemStack> leftover) {}
+
+    /** Carves {@code spins} chunks of {@code unitsPerSpin} units out of the deposit (cloned); rest is leftover. */
+    public Split splitDeposit(List<ItemStack> deposit, int spins, int unitsPerSpin) {
+        List<ItemStack> rest = new ArrayList<>();
+        for (ItemStack item : deposit) {
+            if (item != null && !item.getType().isAir() && item.getAmount() > 0) rest.add(item.clone());
+        }
+        List<List<ItemStack>> out = new ArrayList<>();
+        if (spins <= 0 || unitsPerSpin <= 0) return new Split(out, rest);
+        for (int i = 0; i < spins; i++) {
+            List<ItemStack> chunk = new ArrayList<>();
+            int need = unitsPerSpin;
+            while (need > 0 && !rest.isEmpty()) {
+                ItemStack head = rest.get(0);
+                int take = Math.min(need, head.getAmount());
+                ItemStack part = head.clone();
+                part.setAmount(take);
+                chunk.add(part);
+                if (take >= head.getAmount()) rest.remove(0);
+                else head.setAmount(head.getAmount() - take);
+                need -= take;
+            }
+            out.add(chunk);
+        }
+        return new Split(out, rest);
     }
 
     /** Live luck (0-100) the current deposit would get; 100 when the required items are paid. */

@@ -1,8 +1,12 @@
 package dev.rollthingy.gui;
 
+import dev.rollthingy.RollService;
 import dev.rollthingy.RollServices;
 import dev.rollthingy.core.box.Box;
+import dev.rollthingy.core.box.OddsEngine;
 import dev.rollthingy.core.box.PaymentRequirement;
+import dev.rollthingy.core.box.Penalty;
+import dev.rollthingy.core.box.PenaltyMath;
 import dev.rollthingy.core.gui.ChestGui;
 import dev.rollthingy.core.msg.SoundRegistry;
 import net.kyori.adventure.text.Component;
@@ -13,6 +17,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class BoxDetailGui {
@@ -50,6 +55,7 @@ public class BoxDetailGui {
         gui.set(13, icon);
 
         drawPayment(gui, box);
+        drawOdds(gui, box);
 
         // View prizes button
         gui.on(47, clk -> new PreviewGui(services).open(clk.player(), box, 0)).set(47,
@@ -123,6 +129,46 @@ public class BoxDetailGui {
                     Map.of("luck", String.valueOf(luck))))));
         });
         gui.set(31, badge);
+    }
+
+    /** "What affects your luck" book: concrete underpay + wrong-item examples from this box's own numbers. */
+    private void drawOdds(ChestGui gui, Box box) {
+        double required = RollService.requiredAmount(box);
+        int req = (int) required;
+        if (req <= 0) return;
+        Penalty penalty = box.penalty();
+        int halfUnits = Math.max(1, req / 2);
+        int luckHalf = PenaltyMath.luckPercent(halfUnits, required);
+        double shortHalf = 1.0 - halfUnits / required;
+        double factor = Math.max(0, 1.0 - shortHalf * penalty.rareCut() / 100.0);
+        OddsEngine.OddsModel model = services.cache().modelOf(box.id());
+        double baseTotal = model.totalItemWeight() + model.zonkWeight();
+        double baseZonk = baseTotal > 0 ? model.zonkWeight() / baseTotal * 100.0 : 0;
+        OddsEngine.OddsModel adj = model.withAdjustedWeights(shortHalf, penalty);
+        double adjTotal = adj.totalItemWeight() + adj.zonkWeight();
+        double newZonk = adjTotal > 0 ? adj.zonkWeight() / adjTotal * 100.0 : 0;
+
+        List<Component> lore = List.of(
+                MM.deserialize(services.messages().get("detail.odds-full",
+                        Map.of("req", String.valueOf(req)))),
+                MM.deserialize(services.messages().get("detail.odds-half",
+                        Map.of("half", String.valueOf(halfUnits), "req", String.valueOf(req),
+                                "luck", String.valueOf(luckHalf)))),
+                MM.deserialize(services.messages().get("detail.odds-effect",
+                        Map.of("factor", fmt(factor), "base", fmt(baseZonk), "new", fmt(newZonk)))),
+                MM.deserialize(services.messages().get("detail.odds-wrong",
+                        Map.of("loose", fmt(penalty.looseValue())))));
+        ItemStack book = new ItemStack(Material.BOOK, 1);
+        book.editMeta(meta -> {
+            meta.displayName(MM.deserialize(services.messages().get("detail.odds-title")));
+            meta.lore(lore);
+        });
+        gui.set(33, book);
+    }
+
+    private static String fmt(double value) {
+        String s = String.format(Locale.ROOT, "%.2f", value).replaceAll("0+$", "").replaceAll("\\.$", "");
+        return s.isEmpty() ? "0" : s;
     }
 
     private ItemStack button(Material material, String text) {

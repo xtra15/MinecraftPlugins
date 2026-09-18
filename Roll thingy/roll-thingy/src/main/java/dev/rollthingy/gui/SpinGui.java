@@ -6,7 +6,9 @@ import dev.rollthingy.core.box.Box;
 import dev.rollthingy.core.box.PaymentRequirement;
 import dev.rollthingy.core.gui.ChestGui;
 import dev.rollthingy.core.gui.DepositGui;
+import dev.rollthingy.core.misc.ItemBundleCodec;
 import dev.rollthingy.core.msg.SoundRegistry;
+import dev.rollthingy.core.store.SpinHistoryRow;
 import dev.rollthingy.roll.SpinAnimation;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -170,14 +172,91 @@ public class SpinGui {
             markConfirmed();
             clearDeposit();
 
+            double required = RollService.requiredAmount(box);
+            int units = RollService.totalUnits(deposit);
+            int full = required > 0 ? (int) (units / required) : 1;
+            int reqInt = required > 0 ? (int) required : 0;
+
+            if (full >= 2) {
+                // Exact multiples: "open N boxes?" Confirm spins N, leftover comes back.
+                RollService.Split split = services.roll().splitDeposit(deposit, full, reqInt);
+                new MultiSpinGui(services).open(player, box, deposit, split, full, 0,
+                        () -> executeMulti(player, box, split));
+                return;
+            }
+            int remainder = required > 0 ? units - reqInt : 0;
+            if (full == 1 && remainder > 0) {
+                // Partial: "need K more for another box, spin 1 now?"
+                RollService.Split split = services.roll().splitDeposit(deposit, 1, reqInt);
+                new MultiSpinGui(services).open(player, box, deposit, split, 1, reqInt - remainder,
+                        () -> executeMulti(player, box, split));
+                return;
+            }
+
             RollService.SpinResult result = services.roll().spin(player, box, deposit);
+            String depositData = ItemBundleCodec.encode(deposit);
             services.sounds().play(player, SoundRegistry.Event.SPIN);
             List<ItemStack> reel = SpinAnimation.buildReel(services, box, result.winnerItem());
             player.closeInventory();
-            new SpinAnimation(services, player, reel, () -> showResult(player, box, result)).run();
+            new SpinAnimation(services, player, reel, () -> showResult(player, box, result, depositData)).run();
         }
 
-        private void showResult(Player player, Box box, RollService.SpinResult result) {
+        private void executeMulti(Player player, Box box, RollService.Split split) {
+            List<RollService.SpinResult> results = new ArrayList<>();
+            for (List<ItemStack> chunk : split.spins()) {
+                results.add(services.roll().spin(player, box, chunk));
+            }
+            MultiSpinGui.returnItems(services, player, split.leftover());
+            services.sounds().play(player, SoundRegistry.Event.SPIN);
+            RollService.SpinResult last = results.get(results.size() - 1);
+            List<ItemStack> reel = SpinAnimation.buildReel(services, box, last.winnerItem());
+            player.closeInventory();
+            new SpinAnimation(services, player, reel, () -> showMultiResult(player, box, split, results)).run();
+        }
+
+        private void showMultiResult(Player player, Box box, RollService.Split split,
+                                     List<RollService.SpinResult> results) {
+            List<String> deposits = new ArrayList<>();
+            for (List<ItemStack> chunk : split.spins()) deposits.add(ItemBundleCodec.encode(chunk));
+            List<Boolean> stored = new ArrayList<>();
+            for (RollService.SpinResult result : results) {
+                boolean zonk = result.outcome().tierIndex() == -1;
+                stored.add(!zonk && services.roll().award(player, box, result));
+            }
+            logHistory(player, box, deposits, results, stored);
+            player.sendMessage(MM.deserialize(services.messages().get("spin.multi-result-title",
+                    Map.of("count", String.valueOf(results.size())))));
+            for (int i = 0; i < results.size(); i++) {
+                RollService.SpinResult result = results.get(i);
+                boolean zonk = result.outcome().tierIndex() == -1;
+                String text = zonk
+                        ? services.messages().get("spin.zonk")
+                        : services.messages().get("spin.win",
+                                Map.of("item", itemDisplayName(result.winnerItem())));
+                player.sendMessage(MM.deserialize(text));
+                if (stored.get(i)) player.sendMessage(MM.deserialize(services.messages().get("claim.stored")));
+            }
+            new MultiResultGui(services).open(player, box, results, stored);
+        }
+
+        private void logHistory(Player player, Box box, List<String> deposits,
+                                List<RollService.SpinResult> results, List<Boolean> stored) {
+            long now = System.currentTimeMillis();
+            List<SpinHistoryRow> rows = new ArrayList<>();
+            for (int i = 0; i < results.size(); i++) {
+                RollService.SpinResult result = results.get(i);
+                boolean zonk = result.outcome().tierIndex() == -1;
+                int luck = (int) Math.round((1.0 - result.shortfall()) * 100);
+                String resultData = zonk
+                        ? "ZONK"
+                        : ItemBundleCodec.encode(List.of(result.winnerItem().clone()));
+                rows.add(new SpinHistoryRow(0, player.getUniqueId(), player.getName(), box.id(), box.name(),
+                        now + i, deposits.get(i), luck, result.shortfall(), resultData, stored.get(i)));
+            }
+            services.history().addAll(rows);
+        }
+
+        private void showResult(Player player, Box box, RollService.SpinResult result, String depositData) {
             boolean zonk = result.outcome().tierIndex() == -1;
             boolean rare = !zonk && result.chancePct() < 0.5;
             String text = zonk
@@ -186,6 +265,7 @@ public class SpinGui {
                             Map.of("item", itemDisplayName(result.winnerItem())));
 
             boolean stored = !zonk && services.roll().award(player, box, result);
+            logHistory(player, box, List.of(depositData), List.of(result), List.of(stored));
 
             ChestGui gui = new ChestGui(3, services.messages().get("spin.result"));
             gui.fill(services.config().fillerItem());

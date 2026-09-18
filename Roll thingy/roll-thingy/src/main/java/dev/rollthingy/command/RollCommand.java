@@ -5,6 +5,7 @@ import dev.rollthingy.RollThingyPlugin;
 import dev.rollthingy.core.box.Box;
 import dev.rollthingy.gui.BoxDetailGui;
 import dev.rollthingy.gui.ClaimGui;
+import dev.rollthingy.gui.HistoryGui;
 import dev.rollthingy.gui.MainGui;
 import dev.rollthingy.gui.admin.AdminGui;
 import net.kyori.adventure.text.minimessage.MiniMessage;
@@ -21,7 +22,7 @@ import java.util.Locale;
 
 public class RollCommand implements CommandExecutor, TabCompleter {
     private static final MiniMessage MM = MiniMessage.miniMessage();
-    private static final List<String> SUBCOMMANDS = List.of("admin", "claim", "reload");
+    private static final List<String> SUBCOMMANDS = List.of("admin", "claim", "history", "reload");
     private final RollThingyPlugin plugin;
 
     public RollCommand(RollThingyPlugin plugin) {
@@ -49,6 +50,10 @@ public class RollCommand implements CommandExecutor, TabCompleter {
             }
             case "claim" -> {
                 if (require(player, "roll.use")) new ClaimGui(services()).open(player, 0);
+            }
+            case "history" -> {
+                if (require(player, "roll.use"))
+                    new HistoryGui(services()).open(player, 0, player.getUniqueId());
             }
             case "reload" -> {
                 if (require(player, "roll.admin")) {

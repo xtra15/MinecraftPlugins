@@ -32,6 +32,8 @@ public class GuiManager {
                 deposit.returnItems(p);
             }
         }
+        ChestGui gui = ChestGui.of(event.getInventory());
+        if (gui != null) gui.fireClose();
         ChestGui.close(event.getInventory());
     }
 

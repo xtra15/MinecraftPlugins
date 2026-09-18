@@ -9,8 +9,10 @@ import dev.rollthingy.core.msg.MessageRepository;
 import dev.rollthingy.core.msg.SoundRegistry;
 import dev.rollthingy.core.store.ClaimStore;
 import dev.rollthingy.core.store.CooldownStore;
+import dev.rollthingy.core.store.SpinHistoryStore;
 import dev.rollthingy.core.store.SqlClaimStore;
 import dev.rollthingy.core.store.SqlCooldownStore;
+import dev.rollthingy.core.store.SqlSpinHistoryStore;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -20,6 +22,7 @@ public class RollServices {
     private final SqliteDatabase db;
     private final CooldownStore cooldowns;
     private final ClaimStore claims;
+    private final SpinHistoryStore history;
     private final BoxRegistry registry;
     private final BoxModelCache cache;
     private final RollService roll;
@@ -35,6 +38,7 @@ public class RollServices {
         db.init();
         this.cooldowns = new SqlCooldownStore(db);
         this.claims = new SqlClaimStore(db);
+        this.history = new SqlSpinHistoryStore(db);
         this.registry = new BoxRegistry(config.boxesDir(), new YamlBoxCodec());
         this.cache = new BoxModelCache(registry);
         cache.reloadAll();
@@ -58,4 +62,5 @@ public class RollServices {
     public JavaPlugin plugin() { return plugin; }
     public CooldownStore cooldowns() { return cooldowns; }
     public ClaimStore claims() { return claims; }
+    public SpinHistoryStore history() { return history; }
 }

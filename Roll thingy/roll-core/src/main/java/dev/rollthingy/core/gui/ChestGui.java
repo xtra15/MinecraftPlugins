@@ -23,6 +23,19 @@ public class ChestGui {
     private final Map<Integer, Slot> slots = new LinkedHashMap<>();
     private Inventory inventory;
     private Component title;
+    private Runnable closeAction;
+
+    /** Runs once when this inventory is closed (X, replacement, quit). Nulls itself after firing. */
+    public ChestGui onClose(Runnable action) {
+        this.closeAction = action;
+        return this;
+    }
+
+    public void fireClose() {
+        Runnable action = closeAction;
+        closeAction = null;
+        if (action != null) action.run();
+    }
 
     public ChestGui(int rows, String title) {
         this.rows = rows;
