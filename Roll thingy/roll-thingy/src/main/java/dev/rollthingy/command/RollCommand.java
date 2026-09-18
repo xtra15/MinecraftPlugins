@@ -9,16 +9,19 @@ import dev.rollthingy.gui.HistoryGui;
 import dev.rollthingy.gui.MainGui;
 import dev.rollthingy.gui.admin.AdminGui;
 import net.kyori.adventure.text.minimessage.MiniMessage;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.UUID;
 
 public class RollCommand implements CommandExecutor, TabCompleter {
     private static final MiniMessage MM = MiniMessage.miniMessage();
@@ -52,8 +55,19 @@ public class RollCommand implements CommandExecutor, TabCompleter {
                 if (require(player, "roll.use")) new ClaimGui(services()).open(player, 0);
             }
             case "history" -> {
-                if (require(player, "roll.use"))
-                    new HistoryGui(services()).open(player, 0, player.getUniqueId());
+                if (args.length >= 3) {
+                    if (!require(player, "roll.admin")) return true;
+                    UUID target = resolvePlayer(args[1]);
+                    if (target == null) {
+                        player.sendMessage(MM.deserialize(services().messages().get("errors.unknown-player",
+                                Map.of("name", args[1]))));
+                        return true;
+                    }
+                    String targetName = nameOf(target, args[1]);
+                    new HistoryGui(services()).open(player, 0, target, targetName);
+                } else if (require(player, "roll.use")) {
+                    new HistoryGui(services()).open(player, 0, player.getUniqueId(), player.getName());
+                }
             }
             case "reload" -> {
                 if (require(player, "roll.admin")) {
@@ -81,6 +95,21 @@ public class RollCommand implements CommandExecutor, TabCompleter {
         return false;
     }
 
+    /** Resolves online players first, then anyone who has ever joined (offline-safe, usercache only). */
+    private UUID resolvePlayer(String name) {
+        Player online = Bukkit.getPlayer(name);
+        if (online != null) return online.getUniqueId();
+        OfflinePlayer off = Bukkit.getOfflinePlayer(name);
+        return off.hasPlayedBefore() ? off.getUniqueId() : null;
+    }
+
+    private String nameOf(UUID uuid, String fallback) {
+        Player online = Bukkit.getPlayer(uuid);
+        if (online != null) return online.getName();
+        String name = Bukkit.getOfflinePlayer(uuid).getName();
+        return name != null ? name : fallback;
+    }
+
     @Override
     public @NotNull List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
         if (args.length == 1) {
@@ -90,6 +119,15 @@ public class RollCommand implements CommandExecutor, TabCompleter {
             }
             for (Box box : services().cache().boxes()) {
                 if (box.id().startsWith(args[0].toLowerCase(Locale.ROOT))) out.add(box.id());
+            }
+            return out;
+        }
+        if (args.length == 2 && args[0].equalsIgnoreCase("history")) {
+            List<String> out = new ArrayList<>();
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                if (p.getName().toLowerCase(Locale.ROOT).startsWith(args[1].toLowerCase(Locale.ROOT))) {
+                    out.add(p.getName());
+                }
             }
             return out;
         }

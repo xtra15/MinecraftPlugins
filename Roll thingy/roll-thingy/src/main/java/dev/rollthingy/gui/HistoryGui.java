@@ -32,7 +32,7 @@ public class HistoryGui {
         this.services = services;
     }
 
-    public void open(Player viewer, int page, UUID filter) {
+    public void open(Player viewer, int page, UUID filter, String filterName) {
         long total = filter == null ? services.history().count() : services.history().countFor(filter);
         long pages = Math.max(1, (total + PER_PAGE - 1) / PER_PAGE);
         int pageIndex = Math.max(0, Math.min(page, (int) pages - 1));
@@ -40,11 +40,18 @@ public class HistoryGui {
                 ? services.history().page(PER_PAGE, pageIndex * PER_PAGE)
                 : services.history().pageFor(filter, PER_PAGE, pageIndex * PER_PAGE);
 
-        String title = filter == null
-                ? services.messages().get("history.title",
-                        Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(pages)))
-                : services.messages().get("history.title-player",
-                        Map.of("page", String.valueOf(pageIndex + 1), "pages", String.valueOf(pages)));
+        Map<String, String> titleArgs = Map.of("page", String.valueOf(pageIndex + 1),
+                "pages", String.valueOf(pages));
+        String title;
+        if (filter == null) {
+            title = services.messages().get("history.title", titleArgs);
+        } else if (filter.equals(viewer.getUniqueId())) {
+            title = services.messages().get("history.title-player", titleArgs);
+        } else {
+            title = services.messages().get("history.title-other",
+                    Map.of("name", filterName != null ? filterName : "?",
+                            "page", String.valueOf(pageIndex + 1), "pages", String.valueOf(pages)));
+        }
         ChestGui gui = new ChestGui(6, title);
         gui.fill(services.config().fillerItem());
         gui.fillRect(9, 44, null);
@@ -66,7 +73,7 @@ public class HistoryGui {
             if (row.stored()) lore.add(MM.deserialize(services.messages().get("history.row-stored")));
             icon.editMeta(meta -> meta.lore(lore));
             int slot = slots[i];
-            gui.on(slot, clk -> openDetail(clk.player(), pageIndex, filter, row)).set(slot, icon);
+            gui.on(slot, clk -> openDetail(clk.player(), pageIndex, filter, filterName, row)).set(slot, icon);
         }
         if (rows.isEmpty()) {
             gui.set(22, button(Material.PAPER, services.messages().get("history.empty")));
@@ -74,11 +81,11 @@ public class HistoryGui {
 
         gui.on(45, clk -> {
             services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
-            open(clk.player(), pageIndex - 1, filter);
+            open(clk.player(), pageIndex - 1, filter, filterName);
         }).set(45, button(Material.ARROW, "<gray><<"));
         gui.on(53, clk -> {
             services.sounds().play(clk.player(), SoundRegistry.Event.CLICK);
-            open(clk.player(), pageIndex + 1, filter);
+            open(clk.player(), pageIndex + 1, filter, filterName);
         }).set(53, button(Material.ARROW, ">>"));
         gui.on(0, clk -> {
             if (filter == null) {
@@ -93,7 +100,7 @@ public class HistoryGui {
         gui.open(viewer);
     }
 
-    private void openDetail(Player viewer, int page, UUID filter, SpinHistoryRow row) {
+    private void openDetail(Player viewer, int page, UUID filter, String filterName, SpinHistoryRow row) {
         ChestGui gui = new ChestGui(4, services.messages().get("history.detail-title"));
         gui.fill(services.config().fillerItem());
         gui.fillRect(9, 26, null);
@@ -119,7 +126,7 @@ public class HistoryGui {
         prize.editMeta(meta -> meta.lore(lore));
         gui.set(22, prize);
 
-        gui.on(0, clk -> open(clk.player(), page, filter))
+        gui.on(0, clk -> open(clk.player(), page, filter, filterName))
                 .set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
         services.sounds().play(viewer, SoundRegistry.Event.CLICK);
         gui.open(viewer);

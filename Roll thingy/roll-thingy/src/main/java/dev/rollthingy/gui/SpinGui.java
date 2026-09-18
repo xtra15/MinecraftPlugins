@@ -224,18 +224,9 @@ public class SpinGui {
                 stored.add(!zonk && services.roll().award(player, box, result));
             }
             logHistory(player, box, deposits, results, stored);
-            player.sendMessage(MM.deserialize(services.messages().get("spin.multi-result-title",
+            player.sendMessage(MM.deserialize(services.messages().get("spin.multi-chat",
                     Map.of("count", String.valueOf(results.size())))));
-            for (int i = 0; i < results.size(); i++) {
-                RollService.SpinResult result = results.get(i);
-                boolean zonk = result.outcome().tierIndex() == -1;
-                String text = zonk
-                        ? services.messages().get("spin.zonk")
-                        : services.messages().get("spin.win",
-                                Map.of("item", itemDisplayName(result.winnerItem())));
-                player.sendMessage(MM.deserialize(text));
-                if (stored.get(i)) player.sendMessage(MM.deserialize(services.messages().get("claim.stored")));
-            }
+            if (stored.contains(true)) player.sendMessage(MM.deserialize(services.messages().get("claim.stored")));
             new MultiResultGui(services).open(player, box, results, stored, 0);
         }
 

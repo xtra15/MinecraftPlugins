@@ -65,6 +65,7 @@ spin:
   multi-confirm: "<green>Yes, spin <count>!"
   multi-cancel: "<red>No, give items back"
   multi-result-title: "<gold>You opened <count> box(es)! <gray>(<page>/<pages>)"
+  multi-chat: "<green>You spun <count> roll(s)! Check the menu for what you got."
 claim:
   title: "<gold>Your prizes <gray>-<white> page <page>/<pages>"
   empty: "<gray>No prizes waiting. Spin to win!"
@@ -78,6 +79,7 @@ claim:
 history:
   title: "<gold>Spin history <gray>-<white> page <page>/<pages>"
   title-player: "<gold>Your spins <gray>-<white> page <page>/<pages>"
+  title-other: "<gold><name>'s spins <gray>-<white> page <page>/<pages>"
   empty: "<gray>No spins logged yet."
   row-player: "<gray>By <white><name>"
   row-box: "<gray>Box: <white><box>"
@@ -174,4 +176,5 @@ admin:
 errors:
   no-permission: "<red>You don't have permission to do that."
   unknown: "<red>That box doesn't exist."
+  unknown-player: "<red>No player called <name> has joined before."
   bad-input: "<red>Invalid input. Try again: <example>"

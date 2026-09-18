@@ -63,7 +63,7 @@ public class AdminGui {
         }).set(53, button(Material.ARROW, ">>"));
         gui.on(49, clk -> create(clk.player())).set(49, button(Material.EMERALD_BLOCK,
                 services.messages().get("admin.create")));
-        gui.on(52, clk -> new dev.rollthingy.gui.HistoryGui(services).open(clk.player(), 0, null))
+        gui.on(52, clk -> new dev.rollthingy.gui.HistoryGui(services).open(clk.player(), 0, null, null))
                 .set(52, button(Material.BOOK, services.messages().get("admin.history")));
         gui.on(0, clk -> { clk.player().closeInventory(); new MainGui(services).open(clk.player(), 0); })
                 .set(0, button(Material.SPECTRAL_ARROW, "<gray>Back"));
