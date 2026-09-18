@@ -11,7 +11,14 @@ public final class ChanceFormat {
         if (percent >= 0.0001) {
             return trim(String.format(Locale.ROOT, "%.4f", percent)) + "%";
         }
-        long in = Math.round(1.0 / percent);
+        long in = Math.round(100.0 / percent);
+        return "1 in " + String.format(Locale.US, "%,d", Math.max(1, in));
+    }
+
+    /** Always renders as "1 in N" (e.g. 50% -> "1 in 2"). Zero stays "0%". */
+    public static String oneInX(double percent) {
+        if (percent <= 0) return "0%";
+        long in = Math.round(100.0 / percent);
         return "1 in " + String.format(Locale.US, "%,d", Math.max(1, in));
     }
 

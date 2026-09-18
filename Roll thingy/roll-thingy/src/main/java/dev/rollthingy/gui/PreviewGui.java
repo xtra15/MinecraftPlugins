@@ -80,7 +80,7 @@ public class PreviewGui {
                 double chance = model.chanceOf(tier, i);
                 ItemStack icon = services.cache().item(boxTier.items().get(i).data());
                 String rarity = boxTier.name();
-                String chanceStr = ChanceFormat.format(chance);
+                String chanceStr = ChanceFormat.oneInX(chance);
                 icon.editMeta(meta -> {
                     meta.displayName(Component.text(rarity).color(rarityColor(chance)));
                     meta.lore(List.of(Component.text(chanceStr)));
