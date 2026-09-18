@@ -34,7 +34,10 @@ public final class ChanceFormat {
         long rem = n % unit;
         if (rem == 0) return Long.toString(whole);
         int digits = String.valueOf(unit).length() - 1;
-        String r = String.format(Locale.ROOT, "%0" + digits + "d", rem).replaceAll("0+$", "");
+        String r = String.format(Locale.ROOT, "%0" + digits + "d", rem);
+        if (r.length() > 3) r = r.substring(0, 3);
+        r = r.replaceAll("0+$", "");
+        if (r.isEmpty()) return Long.toString(whole);
         return whole + "." + r;
     }
 
