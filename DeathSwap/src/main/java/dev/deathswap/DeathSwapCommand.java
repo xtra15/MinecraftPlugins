@@ -32,7 +32,7 @@ public class DeathSwapCommand implements CommandExecutor {
             return true;
         }
         if (args.length == 0) {
-            p.sendMessage(MM.deserialize("<gold>/sswap key</gold> start the build phase"));
+            p.sendMessage(MM.deserialize("<gold>/sswap key</gold> start the round (or right-click the Death Swap Key)"));
             p.sendMessage(MM.deserialize("<gold>/sswap team <player> <role></gold> assign to red|blue"));
             p.sendMessage(MM.deserialize("<gold>/sswap reset</gold> reset the arena"));
             p.sendMessage(MM.deserialize("<gold>/sswap status</gold> show teams"));
@@ -51,17 +51,7 @@ public class DeathSwapCommand implements CommandExecutor {
     }
 
     private boolean key(Player p) {
-        Game game = plugin.getGame();
-        if (game.getState() != GameState.WAITING && game.getState() != GameState.ENDED) {
-            p.sendMessage(MM.deserialize("<red>A round is already running."));
-            return true;
-        }
-        if (game.red().size() < 1 || game.blue().size() < 1) {
-            p.sendMessage(MM.deserialize("<red>Assign at least one player to each team with /sswap team.</red>"));
-            return true;
-        }
-        game.startBuild(p);
-        p.sendMessage(MM.deserialize("<green>Build phase started! 5 minutes.</green>"));
+        plugin.getGame().tryStart(p);
         return true;
     }
 

@@ -10,6 +10,8 @@ import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.scoreboard.Scoreboard;
 
 import java.util.*;
@@ -17,6 +19,9 @@ import java.util.UUID;
 
 public class Game {
     private static final MiniMessage MM = MiniMessage.miniMessage();
+    public static final Material KEY_MATERIAL = Material.GOLD_NUGGET;
+    private static final String KEY_NAME = "<gold><bold>Death Swap Key";
+    private static final String KEY_LORE = "<gray>Right-click to start the round.";
     private final DeathSwap plugin;
     private final ArenaConfig arena;
     private final DeathTeam red, blue;
@@ -55,7 +60,7 @@ public class Game {
     public DeathTeam red() { return red; }
     public DeathTeam blue() { return blue; }
 
-    void startBuild(Player admin) {
+    void startBuild(Player starter) {
         state = GameState.BUILD;
         alive.clear(); out.clear();
         for (UUID u : red.getMembers()) alive.add(u);
@@ -68,6 +73,49 @@ public class Game {
             p.setGameMode(GameMode.CREATIVE);
             p.setInvulnerable(false);
             bossBar.addPlayer(p);
+        }
+        takeKeys();
+        Bukkit.broadcast(MM.deserialize("<green>" + (starter != null ? starter.getName() + " " : "") + "started the round! <aqua>" + buildSeconds + "s creative<green>, then everyone swaps.</green>"));
+    }
+
+    public boolean tryStart(Player p) {
+        if (state != GameState.WAITING && state != GameState.ENDED) {
+            p.sendMessage(MM.deserialize("<red>A round is already running.</red>"));
+            return true;
+        }
+        if (red.size() < 1 || blue.size() < 1) {
+            p.sendMessage(MM.deserialize("<red>Need at least one player on each team before starting.</red>"));
+            return true;
+        }
+        startBuild(p);
+        return true;
+    }
+
+    public void giveKey(Player p) {
+        if (state != GameState.WAITING && state != GameState.ENDED) return;
+        ItemStack key = new ItemStack(KEY_MATERIAL, 1);
+        key.editMeta(meta -> {
+            meta.displayName(MM.deserialize(KEY_NAME));
+            meta.lore(List.of(MM.deserialize(KEY_LORE)));
+        });
+        p.getInventory().addItem(key); // (first empty slot; inventory full = no key, no round)
+    }
+
+    public void giveKeysToAll() {
+        for (Player p : Bukkit.getOnlinePlayers()) giveKey(p);
+    }
+
+    public boolean isKeyItem(ItemStack it) {
+        if (it == null || it.getType() != KEY_MATERIAL) return false;
+        ItemMeta meta = it.getItemMeta();
+        return meta != null && meta.displayName() != null && meta.displayName().equals(MM.deserialize(KEY_NAME));
+    }
+
+    public void takeKeys() {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            for (ItemStack it : p.getInventory().getContents()) {
+                if (isKeyItem(it)) it.setAmount(0);
+            }
         }
     }
 
@@ -185,6 +233,7 @@ public class Game {
             p.setGameMode(GameMode.SURVIVAL);
             p.setInvulnerable(false);
         }
+        giveKeysToAll();
     }
 
     List<Player> online(DeathTeam t) {

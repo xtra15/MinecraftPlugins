@@ -25,6 +25,7 @@ public class JoinLeaveListener implements Listener {
         DeathTeam smaller = game.red().size() <= game.blue().size() ? game.red() : game.blue();
         game.assignTeam(p, smaller == game.red() ? "red" : "blue");
         p.setGameMode(GameMode.SURVIVAL);
+        game.giveKey(p);
         GameState st = game.getState();
         if (st == GameState.BUILD || st == GameState.SWAPPING || st == GameState.FIGHTING) {
             p.teleport(game.arena().getLobby(), org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.PLUGIN);

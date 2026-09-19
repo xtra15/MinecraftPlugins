@@ -24,7 +24,7 @@ public class ArenaConfig {
         ConfigurationSection l = a.getConfigurationSection("lobby");
         World w = Bukkit.getWorld("world");
         lobby = new Location(w, l.getDouble("x"), l.getDouble("y"), l.getDouble("z"));
-        buildSeconds = a.getInt("build-seconds", 300);
+        buildSeconds = a.getInt("build-seconds", 5);
     }
 
     public Location getRedCenter() { return new Location(lobby.getWorld(), (redX1+redX2)/2, (redY1+redY2)/2, (redZ1+redZ2)/2); }

@@ -1,5 +1,5 @@
 arena:
-  build-seconds: 300
+  build-seconds: 5
   red:
     x1: 0.0
     z1: 0.0
