@@ -5,9 +5,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
-import org.bukkit.boss.BarColor;
-import org.bukkit.boss.BarStyle;
-import org.bukkit.boss.BossBar;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.ItemStack;
@@ -29,7 +26,6 @@ public class Game {
     private final Set<UUID> alive = new HashSet<>();
     private final Set<UUID> out = new HashSet<>();
     private GameState state = GameState.WAITING;
-    private BossBar bossBar;
     private int buildSeconds;
     private int buildTick = -1;
 
@@ -66,13 +62,11 @@ public class Game {
         for (UUID u : red.getMembers()) alive.add(u);
         for (UUID u : blue.getMembers()) alive.add(u);
         buildTick = buildSeconds * 20;
-        bossBar = Bukkit.createBossBar("Build Phase " + buildSeconds + "s", BarColor.GREEN, BarStyle.SOLID);
         for (UUID u : alive) {
             Player p = Bukkit.getPlayer(u);
             if (p == null) continue;
             p.setGameMode(GameMode.CREATIVE);
             p.setInvulnerable(false);
-            bossBar.addPlayer(p);
         }
         takeKeys();
         Bukkit.broadcast(MM.deserialize("<green>" + (starter != null ? starter.getName() + " " : "") + "started the round! <aqua>" + buildSeconds + "s creative<green>, then everyone swaps.</green>"));
@@ -125,12 +119,16 @@ public class Game {
         if (buildTick <= 0) { startSwap(); return; }
         buildTick--;
         int s = (buildTick + 19) / 20;
-        bossBar.setTitle("Build Phase " + s + "s");
-        bossBar.setProgress(buildSeconds > 0 ? (double) buildTick / (buildSeconds * 20) : 0);
+        if (s > 0 && s <= 10) {
+            net.kyori.adventure.text.Component msg = MM.deserialize("<gold><bold>SWAP in <white>" + s + "<gold>s!</bold></gold>");
+            for (UUID u : alive) {
+                Player p = Bukkit.getPlayer(u);
+                if (p != null) p.sendActionBar(msg);
+            }
+        }
     }
 
     void startSwap() {
-        if (bossBar != null) bossBar.removeAll();
         state = GameState.SWAPPING;
         List<Player> redMembers = online(red);
         List<Player> blueMembers = online(blue);
@@ -225,7 +223,6 @@ public class Game {
 
     void reset() {
         state = GameState.WAITING;
-        if (bossBar != null) { bossBar.removeAll(); bossBar = null; }
         buildTick = -1;
         red.clear(); blue.clear();
         alive.clear(); out.clear();
