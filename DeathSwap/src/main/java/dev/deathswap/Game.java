@@ -151,12 +151,22 @@ public class Game {
     }
 
     public void assignTeam(Player p, String role) {
-        org.bukkit.scoreboard.Team old = board.getPlayerTeam(p);
-        if (old != null) old.removeEntry(p.getName());
-        org.bukkit.scoreboard.Team t = role.equalsIgnoreCase("red") ? board.getTeam("deathswap_red") : board.getTeam("deathswap_blue");
-        t.addEntry(p.getName());
+        UUID id = p.getUniqueId();
+        boolean redRole = role.equalsIgnoreCase("red");
+        DeathTeam to = redRole ? red : blue;
+        DeathTeam from = redRole ? blue : red;
+        from.remove(id);
+        to.add(id);
+        org.bukkit.scoreboard.Team fromSb = board.getTeam(from.getName());
+        org.bukkit.scoreboard.Team toSb = board.getTeam(to.getName());
+        if (fromSb != null) fromSb.removeEntry(p.getName());
+        if (toSb != null) toSb.addEntry(p.getName());
         p.setScoreboard(board);
         p.setGameMode(GameMode.SURVIVAL);
+    }
+
+    public DeathTeam deathTeamOf(Player p) {
+        return red.contains(p.getUniqueId()) ? red : blue;
     }
 
     public org.bukkit.scoreboard.Team getTeam(Player p) {
