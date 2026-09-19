@@ -37,15 +37,17 @@ public class Game {
         this.board = Bukkit.getScoreboardManager().getMainScoreboard();
         this.red = new DeathTeam("deathswap_red", "RED", Material.RED_DYE);
         this.blue = new DeathTeam("deathswap_blue", "BLUE", Material.BLUE_DYE);
-        registerScoreboardTeam("deathswap_red", "RED", Material.RED_DYE);
-        registerScoreboardTeam("deathswap_blue", "BLUE", Material.BLUE_DYE);
+        registerScoreboardTeam("deathswap_red", net.kyori.adventure.text.format.NamedTextColor.RED);
+        registerScoreboardTeam("deathswap_blue", net.kyori.adventure.text.format.NamedTextColor.BLUE);
     }
 
-    private org.bukkit.scoreboard.Team registerScoreboardTeam(String name, String prefix, Material color) {
+    private void registerScoreboardTeam(String name, net.kyori.adventure.text.format.NamedTextColor color) {
         org.bukkit.scoreboard.Team t = board.getTeam(name);
-        if (t == null) t = board.registerNewTeam(name);
-        t.prefix(MM.deserialize("<" + color.name().toLowerCase() + ">" + prefix + " "));
-        return t;
+        if (t != null) t.unregister();
+        t = board.registerNewTeam(name);
+        t.color(color);
+        t.setAllowFriendlyFire(false);
+        t.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, org.bukkit.scoreboard.Team.OptionStatus.ALWAYS);
     }
 
     public GameState getState() { return state; }

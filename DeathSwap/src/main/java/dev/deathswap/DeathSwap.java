@@ -5,7 +5,6 @@ import org.bukkit.GameMode;
 import org.bukkit.plugin.java.JavaPlugin;
 import dev.deathswap.listener.DeathListener;
 import dev.deathswap.listener.JoinLeaveListener;
-import dev.deathswap.listener.MoveListener;
 import dev.deathswap.listener.RespawnListener;
 
 public class DeathSwap extends JavaPlugin {
@@ -21,7 +20,6 @@ public class DeathSwap extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new DeathListener(this), this);
         Bukkit.getPluginManager().registerEvents(new RespawnListener(this), this);
         Bukkit.getPluginManager().registerEvents(new JoinLeaveListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new MoveListener(this), this);
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             if (game.getState() == GameState.BUILD) game.tickBuild();
         }, 1L, 1L);
