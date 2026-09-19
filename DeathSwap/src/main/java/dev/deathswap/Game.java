@@ -37,6 +37,15 @@ public class Game {
         this.board = Bukkit.getScoreboardManager().getMainScoreboard();
         this.red = new DeathTeam("deathswap_red", "RED", Material.RED_DYE);
         this.blue = new DeathTeam("deathswap_blue", "BLUE", Material.BLUE_DYE);
+        registerScoreboardTeam("deathswap_red", "RED", Material.RED_DYE);
+        registerScoreboardTeam("deathswap_blue", "BLUE", Material.BLUE_DYE);
+    }
+
+    private org.bukkit.scoreboard.Team registerScoreboardTeam(String name, String prefix, Material color) {
+        org.bukkit.scoreboard.Team t = board.getTeam(name);
+        if (t == null) t = board.registerNewTeam(name);
+        t.prefix(MM.deserialize("<" + color.name().toLowerCase() + ">" + prefix + " "));
+        return t;
     }
 
     public GameState getState() { return state; }
