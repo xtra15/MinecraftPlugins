@@ -55,6 +55,13 @@ public class Game {
     public ArenaConfig arena() { return arena; }
     public DeathTeam red() { return red; }
     public DeathTeam blue() { return blue; }
+    public int getBuildSeconds() { return buildSeconds; }
+
+    public void setBuildSeconds(int seconds) {
+        buildSeconds = Math.max(1, Math.min(600, seconds));
+        plugin.getConfig().set("arena.build-seconds", buildSeconds);
+        plugin.saveConfig();
+    }
 
     void startBuild(Player starter) {
         state = GameState.BUILD;

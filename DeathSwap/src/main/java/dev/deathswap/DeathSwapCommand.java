@@ -34,6 +34,7 @@ public class DeathSwapCommand implements CommandExecutor {
         if (args.length == 0) {
             p.sendMessage(MM.deserialize("<gold>/sswap key</gold> start the round (or right-click the Death Swap Key)"));
             p.sendMessage(MM.deserialize("<gold>/sswap team <player> <role></gold> assign to red|blue"));
+            p.sendMessage(MM.deserialize("<gold>/sswap timer <seconds></gold> creative build time (current: " + plugin.getGame().getBuildSeconds() + "s)"));
             p.sendMessage(MM.deserialize("<gold>/sswap reset</gold> reset the arena"));
             p.sendMessage(MM.deserialize("<gold>/sswap status</gold> show teams"));
             return true;
@@ -41,6 +42,7 @@ public class DeathSwapCommand implements CommandExecutor {
         return switch (args[0].toLowerCase()) {
             case "key" -> key(p);
             case "team" -> team(p, args);
+            case "timer" -> timer(p, args);
             case "reset" -> reset(p);
             case "status" -> status(p);
             default -> {
@@ -64,6 +66,18 @@ public class DeathSwapCommand implements CommandExecutor {
         Game game = plugin.getGame();
         game.assignTeam(target, role);
         p.sendMessage(MM.deserialize("<green>Assigned <white>" + target.getName() + " <green>to " + role + ".</green>"));
+        return true;
+    }
+
+    private boolean timer(Player p, String[] args) {
+        if (args.length < 2) { p.sendMessage(MM.deserialize("<red>Usage: /sswap timer <seconds></red>")); return true; }
+        try {
+            int seconds = Integer.parseInt(args[1]);
+            plugin.getGame().setBuildSeconds(seconds);
+            p.sendMessage(MM.deserialize("<green>Build timer set to <white>" + plugin.getGame().getBuildSeconds() + "s<green> (applies next round).</green>"));
+        } catch (NumberFormatException e) {
+            p.sendMessage(MM.deserialize("<red>That's not a number.</red>"));
+        }
         return true;
     }
 
