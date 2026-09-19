@@ -89,6 +89,7 @@ public class Game {
             endFight();
             return;
         }
+        Bukkit.broadcast(MM.deserialize("<gold>SWAP! Every player swaps with a random enemy.</gold>"));
         Map<Player, Location> redLocs = snap(redMembers);
         Map<Player, Location> blueLocs = snap(blueMembers);
         for (Player p : redMembers) {
@@ -124,10 +125,11 @@ public class Game {
             p.setGameMode(GameMode.SURVIVAL);
             p.setInvulnerable(false);
         }
-        Bukkit.getConsoleSender().sendMessage(MM.deserialize("<gold>Fight! Last player standing wins.</gold>"));
+        Bukkit.broadcast(MM.deserialize("<gold>Fight! Last player standing wins.</gold>"));
     }
 
     public void onDeath(UUID dead) {
+        if (state != GameState.BUILD && state != GameState.SWAPPING && state != GameState.FIGHTING) return;
         alive.remove(dead);
         out.add(dead);
         Player p = Bukkit.getPlayer(dead);
@@ -138,12 +140,12 @@ public class Game {
     private void announceWinner() {
         state = GameState.ENDED;
         if (alive.isEmpty()) {
-            Bukkit.getConsoleSender().sendMessage(MM.deserialize("<gold>Draw — everyone died.</gold>"));
+            Bukkit.broadcast(MM.deserialize("<gold>Draw — everyone is out. Nobody is teleported.</gold>"));
         } else {
             UUID winner = alive.iterator().next();
             Player wp = Bukkit.getPlayer(winner);
             String name = wp != null ? wp.getName() : winner.toString();
-            Bukkit.getConsoleSender().sendMessage(MM.deserialize("<green>Winner: <white>" + name + "</white>!</green>"));
+            Bukkit.broadcast(MM.deserialize("<green>Winner: <white>" + name + "</white>!</green>"));
         }
         Bukkit.getScheduler().runTaskLater(plugin, this::reset, 20L * 20);
     }
@@ -170,7 +172,6 @@ public class Game {
         for (Player p : Bukkit.getOnlinePlayers()) {
             p.setGameMode(GameMode.SURVIVAL);
             p.setInvulnerable(false);
-            p.teleport(arena.getLobby(), PlayerTeleportEvent.TeleportCause.PLUGIN);
         }
     }
 
