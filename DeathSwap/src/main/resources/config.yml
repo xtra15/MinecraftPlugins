@@ -1,6 +1,7 @@
 arena:
   grab-seconds: 5
   trap-seconds: 180
+  reswap-seconds: 300
   red:
     x1: 0.0
     z1: 0.0

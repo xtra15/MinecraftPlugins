@@ -11,6 +11,7 @@ public class ArenaConfig {
     private final Location lobby;
     private final int grabSeconds;
     private final int trapSeconds;
+    private final int reswapSeconds;
 
     public ArenaConfig() {
         ConfigurationSection a = DeathSwap.getInstance().getConfig().getConfigurationSection("arena");
@@ -27,6 +28,7 @@ public class ArenaConfig {
         lobby = new Location(w, l.getDouble("x"), l.getDouble("y"), l.getDouble("z"));
         grabSeconds = a.getInt("grab-seconds", 5);
         trapSeconds = a.getInt("trap-seconds", 180);
+        reswapSeconds = a.getInt("reswap-seconds", 300);
     }
 
     public Location getRedCenter() { return new Location(lobby.getWorld(), (redX1+redX2)/2, (redY1+redY2)/2, (redZ1+redZ2)/2); }
@@ -34,6 +36,7 @@ public class ArenaConfig {
     public Location getLobby() { return lobby; }
     public int getGrabSeconds() { return grabSeconds; }
     public int getTrapSeconds() { return trapSeconds; }
+    public int getReswapSeconds() { return reswapSeconds; }
 
     public boolean inRed(Location loc) { return inBox(loc, redX1, redZ1, redX2, redZ2); }
     public boolean inBlue(Location loc) { return inBox(loc, blueX1, blueZ1, blueX2, blueZ2); }

@@ -28,7 +28,9 @@ public class Game {
     private GameState state = GameState.WAITING;
     private int grabSeconds;
     private int trapSeconds;
+    private int reswapSeconds;
     private int trapTicks = -1;
+    private int reswapTicks = -1;
     private final Map<UUID, Integer> preps = new HashMap<>();
     private final Set<UUID> prepped = new HashSet<>();
 
@@ -39,6 +41,7 @@ public class Game {
         this.arena = new ArenaConfig();
         this.grabSeconds = arena.getGrabSeconds();
         this.trapSeconds = arena.getTrapSeconds();
+        this.reswapSeconds = arena.getReswapSeconds();
         this.board = Bukkit.getScoreboardManager().getMainScoreboard();
         this.red = new DeathTeam("deathswap_red", "RED", Material.RED_DYE);
         this.blue = new DeathTeam("deathswap_blue", "BLUE", Material.BLUE_DYE);
@@ -72,6 +75,14 @@ public class Game {
     public void setTrapSeconds(int seconds) {
         trapSeconds = Math.max(10, Math.min(3600, seconds));
         plugin.getConfig().set("arena.trap-seconds", trapSeconds);
+        plugin.saveConfig();
+    }
+
+    public int getReswapSeconds() { return reswapSeconds; }
+
+    public void setReswapSeconds(int seconds) {
+        reswapSeconds = Math.max(10, Math.min(3600, seconds));
+        plugin.getConfig().set("arena.reswap-seconds", reswapSeconds);
         plugin.saveConfig();
     }
 
@@ -232,10 +243,12 @@ public class Game {
             prepped.add(id);
         }
         preps.clear();
-        alive.clear(); out.clear();
-        for (Player pr : participants()) alive.add(pr.getUniqueId());
-        List<Player> redMembers = online(red);
-        List<Player> blueMembers = online(blue);
+        if (alive.isEmpty()) {
+            alive.clear(); out.clear();
+            for (Player pr : participants()) alive.add(pr.getUniqueId());
+        }
+        List<Player> redMembers = onlineAlive(red);
+        List<Player> blueMembers = onlineAlive(blue);
         if (redMembers.isEmpty() || blueMembers.isEmpty()) {
             Bukkit.getConsoleSender().sendMessage(MM.deserialize("<red>Cannot swap: a team has no online players.</red>"));
             endFight();
@@ -278,6 +291,32 @@ public class Game {
             p.setInvulnerable(false);
         }
         Bukkit.broadcast(MM.deserialize("<gold>Fight! Last player standing wins.</gold>"));
+        reswapTicks = reswapSeconds * 20;
+        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+            if (state != GameState.FIGHTING) { task.cancel(); return; }
+            if (alive.size() <= 1) { task.cancel(); return; }
+            if (reswapTicks <= 0) {
+                List<Player> r = onlineAlive(red);
+                List<Player> b = onlineAlive(blue);
+                if (r.isEmpty() || b.isEmpty()) {
+                    reswapTicks = reswapSeconds * 20; // one side wiped, wait for the fight to resolve
+                    return;
+                }
+                task.cancel();
+                Bukkit.broadcast(MM.deserialize("<gold>Nobody died — swapping again!</gold>"));
+                startSwap();
+                return;
+            }
+            reswapTicks--;
+            int s = (reswapTicks + 19) / 20;
+            if (s > 0 && s <= 10) {
+                net.kyori.adventure.text.Component msg = MM.deserialize("<gold><bold>SWAP in <white>" + s + "<gold>s!</bold></gold>");
+                for (UUID u : alive) {
+                    Player pr = Bukkit.getPlayer(u);
+                    if (pr != null) pr.sendActionBar(msg);
+                }
+            }
+        }, 1L, 1L);
     }
 
     public void onDeath(UUID dead) {
@@ -328,6 +367,7 @@ public class Game {
         state = GameState.WAITING;
         preps.clear(); prepped.clear();
         trapTicks = -1;
+        reswapTicks = -1;
         alive.clear(); out.clear();
         for (Player p : Bukkit.getOnlinePlayers()) {
             p.setGameMode(GameMode.SURVIVAL);
@@ -341,6 +381,16 @@ public class Game {
     public void clearTeams() {
         red.clear(); blue.clear();
         giveKeysToAll();
+    }
+
+    List<Player> onlineAlive(DeathTeam t) {
+        List<Player> ps = new ArrayList<>();
+        for (UUID u : t.getMembers()) {
+            if (!alive.contains(u)) continue;
+            Player p = Bukkit.getPlayer(u);
+            if (p != null) ps.add(p);
+        }
+        return ps;
     }
 
     List<Player> online(DeathTeam t) {

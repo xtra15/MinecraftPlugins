@@ -36,6 +36,7 @@ public class DeathSwapCommand implements CommandExecutor {
             p.sendMessage(MM.deserialize("<gold>/sswap team <player> <role></gold> assign to red|blue"));
             p.sendMessage(MM.deserialize("<gold>/sswap timer <seconds></gold> creative grab time (current: " + plugin.getGame().getGrabSeconds() + "s)"));
             p.sendMessage(MM.deserialize("<gold>/sswap prep <seconds></gold> trap-prep time before swap (current: " + plugin.getGame().getTrapSeconds() + "s)"));
+            p.sendMessage(MM.deserialize("<gold>/sswap reswap <seconds></gold> re-swap if nobody dies (current: " + plugin.getGame().getReswapSeconds() + "s)"));
             p.sendMessage(MM.deserialize("<gold>/sswap reset</gold> reset the arena"));
             p.sendMessage(MM.deserialize("<gold>/sswap status</gold> show teams"));
             return true;
@@ -45,6 +46,7 @@ public class DeathSwapCommand implements CommandExecutor {
             case "team" -> team(p, args);
             case "timer" -> timer(p, args);
             case "prep" -> prep(p, args);
+            case "reswap" -> reswap(p, args);
             case "reset" -> reset(p);
             case "status" -> status(p);
             default -> {
@@ -98,6 +100,18 @@ public class DeathSwapCommand implements CommandExecutor {
             int seconds = Integer.parseInt(args[1]);
             plugin.getGame().setTrapSeconds(seconds);
             p.sendMessage(MM.deserialize("<green>Trap-prep timer set to <white>" + plugin.getGame().getTrapSeconds() + "s<green> before the swap.</green>"));
+        } catch (NumberFormatException e) {
+            p.sendMessage(MM.deserialize("<red>That's not a number.</red>"));
+        }
+        return true;
+    }
+
+    private boolean reswap(Player p, String[] args) {
+        if (args.length < 2) { p.sendMessage(MM.deserialize("<red>Usage: /sswap reswap <seconds></red>")); return true; }
+        try {
+            int seconds = Integer.parseInt(args[1]);
+            plugin.getGame().setReswapSeconds(seconds);
+            p.sendMessage(MM.deserialize("<green>Re-swap timer set to <white>" + plugin.getGame().getReswapSeconds() + "s<green> after each swap with no deaths.</green>"));
         } catch (NumberFormatException e) {
             p.sendMessage(MM.deserialize("<red>That's not a number.</red>"));
         }
