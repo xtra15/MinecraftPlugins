@@ -1,5 +1,6 @@
 arena:
-  build-seconds: 5
+  grab-seconds: 5
+  trap-seconds: 180
   red:
     x1: 0.0
     z1: 0.0

@@ -27,7 +27,7 @@ public class JoinLeaveListener implements Listener {
         p.setGameMode(GameMode.SURVIVAL);
         game.giveKey(p);
         GameState st = game.getState();
-        if (st == GameState.BUILD || st == GameState.SWAPPING || st == GameState.FIGHTING) {
+        if (st == GameState.SWAPPING || st == GameState.TRAP || st == GameState.FIGHTING) {
             p.teleport(game.arena().getLobby(), org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.PLUGIN);
         }
         event.setJoinMessage(p.getName() + " joined.");

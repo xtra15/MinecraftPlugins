@@ -17,7 +17,7 @@ dependencies {
 }
 
 tasks.shadowJar {
-    archiveFileName.set("DeathSwap-1.0.0.jar")
+    archiveFileName.set("DeathSwap-1.1.0.jar")
 }
 
 tasks.build {

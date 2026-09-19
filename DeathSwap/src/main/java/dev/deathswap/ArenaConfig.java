@@ -9,7 +9,8 @@ public class ArenaConfig {
     private final double redX1, redZ1, redX2, redZ2, redY1, redY2;
     private final double blueX1, blueZ1, blueX2, blueZ2, blueY1, blueY2;
     private final Location lobby;
-    private final int buildSeconds;
+    private final int grabSeconds;
+    private final int trapSeconds;
 
     public ArenaConfig() {
         ConfigurationSection a = DeathSwap.getInstance().getConfig().getConfigurationSection("arena");
@@ -24,13 +25,15 @@ public class ArenaConfig {
         ConfigurationSection l = a.getConfigurationSection("lobby");
         World w = Bukkit.getWorld("world");
         lobby = new Location(w, l.getDouble("x"), l.getDouble("y"), l.getDouble("z"));
-        buildSeconds = a.getInt("build-seconds", 5);
+        grabSeconds = a.getInt("grab-seconds", 5);
+        trapSeconds = a.getInt("trap-seconds", 180);
     }
 
     public Location getRedCenter() { return new Location(lobby.getWorld(), (redX1+redX2)/2, (redY1+redY2)/2, (redZ1+redZ2)/2); }
     public Location getBlueCenter() { return new Location(lobby.getWorld(), (blueX1+blueX2)/2, (blueY1+blueY2)/2, (blueZ1+blueZ2)/2); }
     public Location getLobby() { return lobby; }
-    public int getBuildSeconds() { return buildSeconds; }
+    public int getGrabSeconds() { return grabSeconds; }
+    public int getTrapSeconds() { return trapSeconds; }
 
     public boolean inRed(Location loc) { return inBox(loc, redX1, redZ1, redX2, redZ2); }
     public boolean inBlue(Location loc) { return inBox(loc, blueX1, blueZ1, blueX2, blueZ2); }

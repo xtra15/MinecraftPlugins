@@ -26,7 +26,9 @@ public class Game {
     private final Set<UUID> alive = new HashSet<>();
     private final Set<UUID> out = new HashSet<>();
     private GameState state = GameState.WAITING;
-    private int prepSeconds;
+    private int grabSeconds;
+    private int trapSeconds;
+    private int trapTicks = -1;
     private final Map<UUID, Integer> preps = new HashMap<>();
     private final Set<UUID> prepped = new HashSet<>();
 
@@ -35,7 +37,8 @@ public class Game {
     public Game(DeathSwap plugin) {
         this.plugin = plugin;
         this.arena = new ArenaConfig();
-        this.prepSeconds = arena.getBuildSeconds();
+        this.grabSeconds = arena.getGrabSeconds();
+        this.trapSeconds = arena.getTrapSeconds();
         this.board = Bukkit.getScoreboardManager().getMainScoreboard();
         this.red = new DeathTeam("deathswap_red", "RED", Material.RED_DYE);
         this.blue = new DeathTeam("deathswap_blue", "BLUE", Material.BLUE_DYE);
@@ -56,11 +59,19 @@ public class Game {
     public ArenaConfig arena() { return arena; }
     public DeathTeam red() { return red; }
     public DeathTeam blue() { return blue; }
-    public int getPrepSeconds() { return prepSeconds; }
+    public int getGrabSeconds() { return grabSeconds; }
 
-    public void setPrepSeconds(int seconds) {
-        prepSeconds = Math.max(1, Math.min(600, seconds));
-        plugin.getConfig().set("arena.build-seconds", prepSeconds);
+    public void setGrabSeconds(int seconds) {
+        grabSeconds = Math.max(1, Math.min(600, seconds));
+        plugin.getConfig().set("arena.grab-seconds", grabSeconds);
+        plugin.saveConfig();
+    }
+
+    public int getTrapSeconds() { return trapSeconds; }
+
+    public void setTrapSeconds(int seconds) {
+        trapSeconds = Math.max(10, Math.min(3600, seconds));
+        plugin.getConfig().set("arena.trap-seconds", trapSeconds);
         plugin.saveConfig();
     }
 
@@ -104,12 +115,12 @@ public class Game {
 
     private void startPrep(Player p) {
         UUID id = p.getUniqueId();
-        preps.put(id, prepSeconds);
+        preps.put(id, grabSeconds);
         p.setGameMode(GameMode.CREATIVE);
-        p.setLevel(prepSeconds);
+        p.setLevel(grabSeconds);
         p.setExp(1.0f);
-        p.sendActionBar(MM.deserialize("<gold><bold>GRAB YOUR STUFF - <white>" + prepSeconds + "<gold>s</bold></gold>"));
-        p.sendMessage(MM.deserialize("<aqua>Creative for <white>" + prepSeconds + "s<aqua> - grab items, then back to survival.</aqua>"));
+        p.sendActionBar(MM.deserialize("<gold><bold>GRAB YOUR STUFF - <white>" + grabSeconds + "<gold>s</bold></gold>"));
+        p.sendMessage(MM.deserialize("<aqua>Creative for <white>" + grabSeconds + "s<aqua> - grab items, then back to survival.</aqua>"));
         Bukkit.getScheduler().runTaskTimer(plugin, task -> {
             int left = preps.getOrDefault(id, 0) - 1;
             if (left <= 0) {
@@ -145,7 +156,28 @@ public class Game {
         for (Player pr : ps) {
             if (!prepped.contains(pr.getUniqueId())) return;
         }
-        startSwap();
+        startTrapPhase();
+    }
+
+    void startTrapPhase() {
+        state = GameState.TRAP;
+        alive.clear(); out.clear();
+        for (Player pr : participants()) alive.add(pr.getUniqueId());
+        trapTicks = trapSeconds * 20;
+        Bukkit.broadcast(MM.deserialize("<gold>Everyone's ready! <aqua>" + trapSeconds + "s<gold> to prepare your traps, then SWAP!</gold>"));
+        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+            if (state != GameState.TRAP) { task.cancel(); return; }
+            if (trapTicks <= 0) { task.cancel(); startSwap(); return; }
+            trapTicks--;
+            int s = (trapTicks + 19) / 20;
+            if (s > 0 && s <= 10) {
+                net.kyori.adventure.text.Component msg = MM.deserialize("<gold><bold>SWAP in <white>" + s + "<gold>s!</bold></gold>");
+                for (UUID u : alive) {
+                    Player pr = Bukkit.getPlayer(u);
+                    if (pr != null) pr.sendActionBar(msg);
+                }
+            }
+        }, 1L, 1L);
     }
 
     private List<Player> participants() {
@@ -295,6 +327,7 @@ public class Game {
     void reset() {
         state = GameState.WAITING;
         preps.clear(); prepped.clear();
+        trapTicks = -1;
         red.clear(); blue.clear();
         alive.clear(); out.clear();
         for (Player p : Bukkit.getOnlinePlayers()) {

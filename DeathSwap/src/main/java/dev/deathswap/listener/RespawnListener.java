@@ -19,7 +19,7 @@ public class RespawnListener implements Listener {
     public void onRespawn(PlayerRespawnEvent event) {
         Game game = plugin.getGame();
         GameState st = game.getState();
-        if (st == GameState.BUILD || st == GameState.SWAPPING || st == GameState.FIGHTING) {
+        if (st == GameState.SWAPPING || st == GameState.TRAP || st == GameState.FIGHTING) {
             event.setRespawnLocation(game.arena().getLobby());
         }
     }
