@@ -259,17 +259,32 @@ public class Game {
         Map<Player, Location> blueLocs = snap(blueMembers);
         for (Player p : redMembers) {
             Player target = random(blueMembers);
+            swapFx(p, p.getLocation().clone(), org.bukkit.Color.RED);
             p.teleport(blueLocs.get(target), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            swapFx(p, p.getLocation(), org.bukkit.Color.RED);
             p.setInvulnerable(true);
             Bukkit.getScheduler().runTaskLater(plugin, () -> p.setInvulnerable(false), 20L * 2);
         }
         for (Player p : blueMembers) {
             Player target = random(redMembers);
+            swapFx(p, p.getLocation().clone(), org.bukkit.Color.BLUE);
             p.teleport(redLocs.get(target), PlayerTeleportEvent.TeleportCause.PLUGIN);
+            swapFx(p, p.getLocation(), org.bukkit.Color.BLUE);
             p.setInvulnerable(true);
             Bukkit.getScheduler().runTaskLater(plugin, () -> p.setInvulnerable(false), 20L * 2);
         }
         Bukkit.getScheduler().runTaskLater(plugin, this::startFight, 20L * 3);
+    }
+
+    private void swapFx(Player p, Location at, org.bukkit.Color color) {
+        if (at.getWorld() == null) return;
+        p.playSound(at, org.bukkit.Sound.ENTITY_ENDERMAN_TELEPORT, 1.0f, 1.0f);
+        org.bukkit.entity.Firework fw = (org.bukkit.entity.Firework) at.getWorld().spawnEntity(at, org.bukkit.entity.EntityType.FIREWORK_ROCKET);
+        org.bukkit.inventory.meta.FireworkMeta meta = fw.getFireworkMeta();
+        meta.addEffect(org.bukkit.FireworkEffect.builder().withColor(color).with(org.bukkit.FireworkEffect.Type.BALL_LARGE).trail(true).build());
+        meta.setPower(0);
+        fw.setFireworkMeta(meta);
+        Bukkit.getScheduler().runTaskLater(plugin, fw::detonate, 2L);
     }
 
     private Map<Player, Location> snap(List<Player> ps) {
