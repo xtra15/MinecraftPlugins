@@ -23,9 +23,6 @@ public class DeathSwap extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new KeyListener(this), this);
         game.giveKeysToAll();
         Bukkit.getPluginManager().registerEvents(new JoinLeaveListener(this), this);
-        Bukkit.getScheduler().runTaskTimer(this, () -> {
-            if (game.getState() == GameState.BUILD) game.tickBuild();
-        }, 1L, 1L);
     }
 
     @Override

@@ -26,15 +26,16 @@ public class Game {
     private final Set<UUID> alive = new HashSet<>();
     private final Set<UUID> out = new HashSet<>();
     private GameState state = GameState.WAITING;
-    private int buildSeconds;
-    private int buildTick = -1;
+    private int prepSeconds;
+    private final Map<UUID, Integer> preps = new HashMap<>();
+    private final Set<UUID> prepped = new HashSet<>();
 
     private static final Random RANDOM = new Random();
 
     public Game(DeathSwap plugin) {
         this.plugin = plugin;
         this.arena = new ArenaConfig();
-        this.buildSeconds = arena.getBuildSeconds();
+        this.prepSeconds = arena.getBuildSeconds();
         this.board = Bukkit.getScoreboardManager().getMainScoreboard();
         this.red = new DeathTeam("deathswap_red", "RED", Material.RED_DYE);
         this.blue = new DeathTeam("deathswap_blue", "BLUE", Material.BLUE_DYE);
@@ -55,41 +56,109 @@ public class Game {
     public ArenaConfig arena() { return arena; }
     public DeathTeam red() { return red; }
     public DeathTeam blue() { return blue; }
-    public int getBuildSeconds() { return buildSeconds; }
+    public int getPrepSeconds() { return prepSeconds; }
 
-    public void setBuildSeconds(int seconds) {
-        buildSeconds = Math.max(1, Math.min(600, seconds));
-        plugin.getConfig().set("arena.build-seconds", buildSeconds);
+    public void setPrepSeconds(int seconds) {
+        prepSeconds = Math.max(1, Math.min(600, seconds));
+        plugin.getConfig().set("arena.build-seconds", prepSeconds);
         plugin.saveConfig();
-    }
-
-    void startBuild(Player starter) {
-        state = GameState.BUILD;
-        alive.clear(); out.clear();
-        for (UUID u : red.getMembers()) alive.add(u);
-        for (UUID u : blue.getMembers()) alive.add(u);
-        buildTick = buildSeconds * 20;
-        for (UUID u : alive) {
-            Player p = Bukkit.getPlayer(u);
-            if (p == null) continue;
-            p.setGameMode(GameMode.CREATIVE);
-            p.setInvulnerable(false);
-        }
-        takeKeys();
-        Bukkit.broadcast(MM.deserialize("<green>" + (starter != null ? starter.getName() + " " : "") + "started the round! <aqua>" + buildSeconds + "s creative<green>, then everyone swaps.</green>"));
     }
 
     public boolean tryStart(Player p) {
         if (state != GameState.WAITING && state != GameState.ENDED) {
-            p.sendMessage(MM.deserialize("<red>A round is already running.</red>"));
+            p.sendMessage(MM.deserialize("<red>The round is already running.</red>"));
             return true;
         }
         if (red.size() < 1 || blue.size() < 1) {
-            p.sendMessage(MM.deserialize("<red>Need at least one player on each team before starting.</red>"));
+            p.sendMessage(MM.deserialize("<red>Need at least one player on each team before preparing.</red>"));
             return true;
         }
-        startBuild(p);
+        UUID id = p.getUniqueId();
+        if (preps.containsKey(id) || prepped.contains(id)) {
+            p.sendMessage(MM.deserialize("<gold>You already used your prep.</gold>"));
+            return true;
+        }
+        startPrep(p);
         return true;
+    }
+
+    public boolean forceSwap(Player p) {
+        if (state != GameState.WAITING && state != GameState.ENDED) {
+            p.sendMessage(MM.deserialize("<red>The round is already running.</red>"));
+            return true;
+        }
+        if (red.size() < 1 || blue.size() < 1) {
+            p.sendMessage(MM.deserialize("<red>Need at least one player on each team before swapping.</red>"));
+            return true;
+        }
+        for (UUID id : new ArrayList<>(preps.keySet())) {
+            Player pr = Bukkit.getPlayer(id);
+            if (pr != null) { pr.setGameMode(GameMode.SURVIVAL); pr.setLevel(0); pr.setExp(0); }
+        }
+        preps.clear();
+        takeKeys();
+        for (Player pr : participants()) prepped.add(pr.getUniqueId());
+        startSwap();
+        return true;
+    }
+
+    private void startPrep(Player p) {
+        UUID id = p.getUniqueId();
+        preps.put(id, prepSeconds);
+        p.setGameMode(GameMode.CREATIVE);
+        p.setLevel(prepSeconds);
+        p.setExp(1.0f);
+        p.sendActionBar(MM.deserialize("<gold><bold>GRAB YOUR STUFF - <white>" + prepSeconds + "<gold>s</bold></gold>"));
+        p.sendMessage(MM.deserialize("<aqua>Creative for <white>" + prepSeconds + "s<aqua> - grab items, then back to survival.</aqua>"));
+        Bukkit.getScheduler().runTaskTimer(plugin, task -> {
+            int left = preps.getOrDefault(id, 0) - 1;
+            if (left <= 0) {
+                task.cancel();
+                finishPrep(p);
+                return;
+            }
+            preps.put(id, left);
+            p.setLevel(left);
+            p.setExp(1.0f);
+            p.sendActionBar(MM.deserialize("<gold><bold>GRAB YOUR STUFF - <white>" + left + "<gold>s</bold></gold>"));
+        }, 20L, 20L);
+    }
+
+    private void finishPrep(Player p) {
+        UUID id = p.getUniqueId();
+        preps.remove(id);
+        prepped.add(id);
+        p.setGameMode(GameMode.SURVIVAL);
+        p.setLevel(0);
+        p.setExp(0);
+        p.sendActionBar(MM.deserialize("<green>Back to survival!</green>"));
+        for (ItemStack it : p.getInventory().getContents()) {
+            if (isKeyItem(it)) it.setAmount(0);
+        }
+        maybeStartSwap();
+    }
+
+    private void maybeStartSwap() {
+        if (state != GameState.WAITING && state != GameState.ENDED) return;
+        List<Player> ps = participants();
+        if (ps.isEmpty()) return;
+        for (Player pr : ps) {
+            if (!prepped.contains(pr.getUniqueId())) return;
+        }
+        startSwap();
+    }
+
+    private List<Player> participants() {
+        List<Player> ps = new ArrayList<>();
+        for (UUID u : red.getMembers()) {
+            Player pl = Bukkit.getPlayer(u);
+            if (pl != null) ps.add(pl);
+        }
+        for (UUID u : blue.getMembers()) {
+            Player pl = Bukkit.getPlayer(u);
+            if (pl != null) ps.add(pl);
+        }
+        return ps;
     }
 
     public void giveKey(Player p) {
@@ -122,21 +191,16 @@ public class Game {
 
     private void teleportToPlot(Player p) {}
 
-    void tickBuild() {
-        if (buildTick <= 0) { startSwap(); return; }
-        buildTick--;
-        int s = (buildTick + 19) / 20;
-        if (s > 0 && s <= 10) {
-            net.kyori.adventure.text.Component msg = MM.deserialize("<gold><bold>SWAP in <white>" + s + "<gold>s!</bold></gold>");
-            for (UUID u : alive) {
-                Player p = Bukkit.getPlayer(u);
-                if (p != null) p.sendActionBar(msg);
-            }
-        }
-    }
-
     void startSwap() {
         state = GameState.SWAPPING;
+        for (UUID id : new ArrayList<>(preps.keySet())) {
+            Player pr = Bukkit.getPlayer(id);
+            if (pr != null) { pr.setGameMode(GameMode.SURVIVAL); pr.setLevel(0); pr.setExp(0); }
+            prepped.add(id);
+        }
+        preps.clear();
+        alive.clear(); out.clear();
+        for (Player pr : participants()) alive.add(pr.getUniqueId());
         List<Player> redMembers = online(red);
         List<Player> blueMembers = online(blue);
         if (redMembers.isEmpty() || blueMembers.isEmpty()) {
@@ -184,7 +248,7 @@ public class Game {
     }
 
     public void onDeath(UUID dead) {
-        if (state != GameState.BUILD && state != GameState.SWAPPING && state != GameState.FIGHTING) return;
+        if (state != GameState.SWAPPING && state != GameState.FIGHTING) return;
         alive.remove(dead);
         out.add(dead);
         Player p = Bukkit.getPlayer(dead);
@@ -230,12 +294,14 @@ public class Game {
 
     void reset() {
         state = GameState.WAITING;
-        buildTick = -1;
+        preps.clear(); prepped.clear();
         red.clear(); blue.clear();
         alive.clear(); out.clear();
         for (Player p : Bukkit.getOnlinePlayers()) {
             p.setGameMode(GameMode.SURVIVAL);
             p.setInvulnerable(false);
+            p.setLevel(0);
+            p.setExp(0);
         }
         giveKeysToAll();
     }

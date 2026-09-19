@@ -32,9 +32,9 @@ public class DeathSwapCommand implements CommandExecutor {
             return true;
         }
         if (args.length == 0) {
-            p.sendMessage(MM.deserialize("<gold>/sswap key</gold> start the round (or right-click the Death Swap Key)"));
+            p.sendMessage(MM.deserialize("<gold>/sswap key</gold> force the swap now (admin)"));
             p.sendMessage(MM.deserialize("<gold>/sswap team <player> <role></gold> assign to red|blue"));
-            p.sendMessage(MM.deserialize("<gold>/sswap timer <seconds></gold> creative build time (current: " + plugin.getGame().getBuildSeconds() + "s)"));
+            p.sendMessage(MM.deserialize("<gold>/sswap timer <seconds></gold> creative prep time (current: " + plugin.getGame().getPrepSeconds() + "s)"));
             p.sendMessage(MM.deserialize("<gold>/sswap reset</gold> reset the arena"));
             p.sendMessage(MM.deserialize("<gold>/sswap status</gold> show teams"));
             return true;
@@ -53,7 +53,7 @@ public class DeathSwapCommand implements CommandExecutor {
     }
 
     private boolean key(Player p) {
-        plugin.getGame().tryStart(p);
+        plugin.getGame().forceSwap(p);
         return true;
     }
 
@@ -73,8 +73,8 @@ public class DeathSwapCommand implements CommandExecutor {
         if (args.length < 2) { p.sendMessage(MM.deserialize("<red>Usage: /sswap timer <seconds></red>")); return true; }
         try {
             int seconds = Integer.parseInt(args[1]);
-            plugin.getGame().setBuildSeconds(seconds);
-            p.sendMessage(MM.deserialize("<green>Build timer set to <white>" + plugin.getGame().getBuildSeconds() + "s<green> (applies next round).</green>"));
+            plugin.getGame().setPrepSeconds(seconds);
+            p.sendMessage(MM.deserialize("<green>Creative prep timer set to <white>" + plugin.getGame().getPrepSeconds() + "s<green> (default 5).</green>"));
         } catch (NumberFormatException e) {
             p.sendMessage(MM.deserialize("<red>That's not a number.</red>"));
         }
