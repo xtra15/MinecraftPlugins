@@ -32,7 +32,7 @@ public class DeathSwapCommand implements CommandExecutor {
             return true;
         }
         if (args.length == 0) {
-            p.sendMessage(MM.deserialize("<gold>/sswap key</gold> force the swap now (admin)"));
+            p.sendMessage(MM.deserialize("<gold>/sswap key [player]</gold> hand out the Death Swap Key (right-click to grab)<br><gold>/sswap team <player> <role></gold> assign to red|blue"));
             p.sendMessage(MM.deserialize("<gold>/sswap team <player> <role></gold> assign to red|blue"));
             p.sendMessage(MM.deserialize("<gold>/sswap timer <seconds></gold> creative grab time (current: " + plugin.getGame().getGrabSeconds() + "s)"));
             p.sendMessage(MM.deserialize("<gold>/sswap prep <seconds></gold> trap-prep time before swap (current: " + plugin.getGame().getTrapSeconds() + "s)"));
@@ -41,7 +41,7 @@ public class DeathSwapCommand implements CommandExecutor {
             return true;
         }
         return switch (args[0].toLowerCase()) {
-            case "key" -> key(p);
+            case "key" -> key(p, args);
             case "team" -> team(p, args);
             case "timer" -> timer(p, args);
             case "prep" -> prep(p, args);
@@ -54,8 +54,17 @@ public class DeathSwapCommand implements CommandExecutor {
         };
     }
 
-    private boolean key(Player p) {
-        plugin.getGame().forceSwap(p);
+    private boolean key(Player p, String[] args) {
+        Game game = plugin.getGame();
+        if (args.length >= 2) {
+            Player target = Bukkit.getPlayer(args[1]);
+            if (target == null) { p.sendMessage(MM.deserialize("<red>Player not found.</red>")); return true; }
+            game.giveKey(target);
+            p.sendMessage(MM.deserialize("<green>Handed the Death Swap Key to <white>" + target.getName() + "<green>.</green>"));
+            return true;
+        }
+        game.giveKeysToAll();
+        p.sendMessage(MM.deserialize("<green>Death Swap Key handed to everyone.</green>"));
         return true;
     }
 

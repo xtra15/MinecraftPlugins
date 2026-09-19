@@ -195,6 +195,7 @@ public class Game {
 
     public void giveKey(Player p) {
         if (state != GameState.WAITING && state != GameState.ENDED) return;
+        p.getInventory().clear();
         ItemStack key = new ItemStack(KEY_MATERIAL, 1);
         key.editMeta(meta -> {
             meta.displayName(MM.deserialize(KEY_NAME));
@@ -323,12 +324,10 @@ public class Game {
     public org.bukkit.scoreboard.Team getTeam(Player p) {
         return board.getPlayerTeam(p);
     }
-
     void reset() {
         state = GameState.WAITING;
         preps.clear(); prepped.clear();
         trapTicks = -1;
-        red.clear(); blue.clear();
         alive.clear(); out.clear();
         for (Player p : Bukkit.getOnlinePlayers()) {
             p.setGameMode(GameMode.SURVIVAL);
@@ -336,6 +335,11 @@ public class Game {
             p.setLevel(0);
             p.setExp(0);
         }
+        giveKeysToAll(); // resets team-agnostic; teams are preserved
+    }
+
+    public void clearTeams() {
+        red.clear(); blue.clear();
         giveKeysToAll();
     }
 
